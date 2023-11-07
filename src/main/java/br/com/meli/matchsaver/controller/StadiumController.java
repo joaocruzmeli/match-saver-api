@@ -22,7 +22,7 @@ public class StadiumController {
         return ResponseEntity.status(HttpStatus.OK).body(stadiumService.getAll());
     }
 
-    @GetMapping(path = "{id}")
+    @GetMapping("/{id}")
     ResponseEntity<StadiumDto> getById(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(stadiumService.getById(id));
     }
@@ -33,13 +33,13 @@ public class StadiumController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newStadium);
     }
 
-    @PutMapping(path = "{id}")
+    @PutMapping("/{id}")
     ResponseEntity<StadiumDto> update(@PathVariable Long id, @RequestBody StadiumDto stadiumDto){
         StadiumDto updatedStadium = stadiumService.update(id, stadiumDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedStadium);
     }
 
-    @DeleteMapping(path = "{id}")
+    @DeleteMapping("/{id}")
     ResponseEntity<String>delete(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(stadiumService.delete(id));
     }

@@ -22,7 +22,7 @@ public class ClubController {
         return ResponseEntity.status(HttpStatus.OK).body(clubService.getAll());
     }
 
-    @GetMapping(path = "{id}")
+    @GetMapping( "/{id}")
     ResponseEntity<ClubDto> getById(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(clubService.getById(id));
     }
@@ -33,13 +33,13 @@ public class ClubController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newClub);
     }
 
-    @PutMapping(path = "{id}")
+    @PutMapping("/{id}")
     ResponseEntity<ClubDto> update(@PathVariable Long id, @RequestBody ClubDto clubDto){
         ClubDto updatedClub = clubService.update(id, clubDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedClub);
     }
 
-    @DeleteMapping(path = "{id}")
+    @DeleteMapping("/{id}")
     ResponseEntity<String>delete(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(clubService.delete(id));
     }
