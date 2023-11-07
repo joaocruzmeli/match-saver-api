@@ -21,9 +21,29 @@ public class MatchController {
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAll());
     }
 
-    @GetMapping(path = "{id}")
+    @GetMapping("/{id}")
     ResponseEntity<MatchDto> getById(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getById(id));
+    }
+
+    @GetMapping("/trashes")
+    ResponseEntity<List<MatchModel>> getAllTrashes(){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllTrashes());
+    }
+
+    @GetMapping("/goalless")
+    ResponseEntity<List<MatchModel>> getAllGoalless(){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllGoalless());
+    }
+
+    @GetMapping("/club")
+    ResponseEntity<List<MatchModel>> getAllByClubName(@RequestParam String name, @RequestParam boolean isClubHome){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByClubName(name, isClubHome));
+    }
+
+    @GetMapping("/stadium")
+    ResponseEntity<List<MatchModel>> getAllByStadium(@RequestParam String name){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByStadium(name));
     }
 
     @PostMapping
@@ -32,13 +52,13 @@ public class MatchController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newMatch);
     }
 
-    @PutMapping(path = "{id}")
+    @PutMapping("/{id}")
     ResponseEntity<MatchDto> update(@PathVariable Long id, @RequestBody MatchDto matchDto){
         MatchDto updatedMatch = matchService.update(id, matchDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedMatch);
     }
 
-    @DeleteMapping(path = "{id}")
+    @DeleteMapping("/{id}")
     ResponseEntity<String>delete(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.delete(id));
     }
