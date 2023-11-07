@@ -1,4 +1,9 @@
 package br.com.meli.matchsaver.model.dto;
 
-public record StadiumDto(String name, Long capacity) {
+import jakarta.validation.constraints.NotNull;
+
+public record StadiumDto(
+        @NotNull
+        String name,
+        Long capacity) {
 }
