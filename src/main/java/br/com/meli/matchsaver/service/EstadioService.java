@@ -2,6 +2,7 @@ package br.com.meli.matchsaver.service;
 
 import br.com.meli.matchsaver.model.Estadio;
 import br.com.meli.matchsaver.model.dto.EstadioDto;
+import br.com.meli.matchsaver.repository.EstadioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
