@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.util.UUID;
 
 @Entity
+@Table(name = "TB_MATCHS")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

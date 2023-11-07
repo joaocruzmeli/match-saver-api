@@ -1,5 +1,6 @@
 package br.com.meli.matchsaver.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
+@Table(name = "TB_STADIUMS")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -28,6 +30,7 @@ public class StadiumModel implements Serializable {
 
     private Long capacity;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "stadiumModel")
     private List<MatchModel> matchModels;
 
