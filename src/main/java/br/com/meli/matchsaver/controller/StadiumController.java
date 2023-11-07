@@ -19,28 +19,28 @@ public class StadiumController {
 
     @GetMapping
     ResponseEntity<List<StadiumDto>> getAll(){
-        return ResponseEntity.ok(stadiumService.getAll());
+        return ResponseEntity.status(HttpStatus.OK).body(stadiumService.getAll());
     }
 
     @GetMapping(path = "{id}")
     ResponseEntity<StadiumDto> getById(@PathVariable Long id){
-        return ResponseEntity.ok(stadiumService.getById(id));
+        return ResponseEntity.status(HttpStatus.OK).body(stadiumService.getById(id));
     }
 
     @PostMapping
     ResponseEntity<StadiumModel> save(@RequestBody StadiumDto stadiumDto){
         StadiumModel newStadium = stadiumService.save(stadiumDto);
-        return new ResponseEntity<>(newStadium, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newStadium);
     }
 
     @PutMapping(path = "{id}")
     ResponseEntity<StadiumDto> update(@PathVariable Long id, @RequestBody StadiumDto stadiumDto){
         StadiumDto updatedStadium = stadiumService.update(id, stadiumDto);
-        return ResponseEntity.ok(updatedStadium);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedStadium);
     }
 
     @DeleteMapping(path = "{id}")
     ResponseEntity<String>delete(@PathVariable Long id){
-        return ResponseEntity.ok(stadiumService.delete(id));
+        return ResponseEntity.status(HttpStatus.OK).body(stadiumService.delete(id));
     }
 }

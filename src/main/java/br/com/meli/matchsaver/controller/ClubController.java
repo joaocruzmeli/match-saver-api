@@ -19,29 +19,29 @@ public class ClubController {
 
     @GetMapping
     ResponseEntity<List<ClubDto>> getAll(){
-        return ResponseEntity.ok(clubService.getAll());
+        return ResponseEntity.status(HttpStatus.OK).body(clubService.getAll());
     }
 
     @GetMapping(path = "{id}")
     ResponseEntity<ClubDto> getById(@PathVariable Long id){
-        return ResponseEntity.ok(clubService.getById(id));
+        return ResponseEntity.status(HttpStatus.OK).body(clubService.getById(id));
     }
 
     @PostMapping
     ResponseEntity<ClubModel> save(@RequestBody ClubDto clubDto){
         ClubModel newClub = clubService.save(clubDto);
-        return new ResponseEntity<>(newClub, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newClub);
     }
 
     @PutMapping(path = "{id}")
     ResponseEntity<ClubDto> update(@PathVariable Long id, @RequestBody ClubDto clubDto){
         ClubDto updatedClub = clubService.update(id, clubDto);
-        return ResponseEntity.ok(updatedClub);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedClub);
     }
 
     @DeleteMapping(path = "{id}")
     ResponseEntity<String>delete(@PathVariable Long id){
-        return ResponseEntity.ok(clubService.delete(id));
+        return ResponseEntity.status(HttpStatus.OK).body(clubService.delete(id));
     }
 
 }
