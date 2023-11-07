@@ -11,8 +11,13 @@ import br.com.meli.matchsaver.repository.StadiumRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class MatchService {
@@ -30,7 +35,7 @@ public class MatchService {
         List<MatchDto> matchDtos = new ArrayList<>();
         for (MatchModel matchModel : matchModels) {
             MatchDto matchDto = new MatchDto(matchModel.getHomeClub().getName(), matchModel.getVisitingClub().getName(),
-                    matchModel.getStadiumModel().getName(), matchModel.getHomeGoals(), matchModel.getVisitingGoals());
+                    matchModel.getStadiumModel().getName(),matchModel.getDateTime().toString(), matchModel.getHomeGoals(), matchModel.getVisitingGoals());
             matchDtos.add(matchDto);
         }
         return matchDtos;
@@ -39,8 +44,9 @@ public class MatchService {
     public MatchDto getById(Long id){
         MatchModel matchFound = matchRepository.findById(id).orElseThrow(
                 () -> new RuntimeException("Match not found"));
+
         return new MatchDto(matchFound.getHomeClub().getName(), matchFound.getVisitingClub().getName(),
-                matchFound.getStadiumModel().getName(), matchFound.getHomeGoals(), matchFound.getVisitingGoals());
+                matchFound.getStadiumModel().getName(), matchFound.getDateTime().toString(), matchFound.getHomeGoals(), matchFound.getVisitingGoals());
     }
 
     public List<MatchModel> getAllTrashes(){
@@ -114,6 +120,7 @@ public class MatchService {
         matchModel.setHomeGoals(matchDto.homeGoals());
         matchModel.setVisitingGoals(matchDto.visitingGoals());
         matchModel.setStadiumModel(stadium);
+        matchModel.setDateTime(convertDateTime(matchDto.dateTime()));
 
         matchModel.setResult(retornaResultado(matchModel));
 
@@ -147,12 +154,15 @@ public class MatchService {
                     () -> new RuntimeException("Club  " + matchDto.visitingClub() + " not found"));
             matchFound.setStadiumModel(stadiumModel);
         }
+        if (matchDto.dateTime() != null){
+            matchFound.setDateTime(convertDateTime(matchDto.dateTime()));
+        }
 
         matchFound.setResult(retornaResultado(matchFound));
 
         matchRepository.save(matchFound);
         return new MatchDto(matchFound.getHomeClub().getName(), matchFound.getVisitingClub().getName(),
-                matchFound.getStadiumModel().getName(), matchFound.getHomeGoals(), matchFound.getVisitingGoals());
+                matchFound.getStadiumModel().getName(),matchFound.getDateTime().toString(), matchFound.getHomeGoals(), matchFound.getVisitingGoals());
     }
 
     public String delete(Long id){
@@ -169,5 +179,31 @@ public class MatchService {
             return Result.VISITING_CLUB_WIN;
         }
         return Result.DRAW;
+    }
+
+    public LocalDateTime convertDateTime(String dateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        try {
+            return LocalDateTime.parse(dateTime, formatter);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid date and time format. Use the format dd/MM/yyyy HH:mm");
+        }
+    }
+
+    public void validateMatchDateTime(String dateTime){
+        LocalDateTime matchDateTime = convertDateTime(dateTime);
+        if (matchDateTime.getHour() < 8 || matchDateTime.getHour() > 22){
+            throw new IllegalArgumentException("Invalid hour. Use hour after 8h and before 22h");
+        }
+        if (matchDateTime.isAfter(LocalDateTime.now())){
+            throw new IllegalArgumentException("Invalid date time. Match date and time are in the future");
+        }
+    }
+
+    public void validateMatchStadium(String name, LocalDateTime dateTime){
+        List<MatchModel> matchModels = matchRepository.findByStadiumModelAndAndDateTime(name, dateTime);
+        if (!matchModels.isEmpty()){
+            throw new IllegalArgumentException("Invalid date time. There is already a match at this date and time.");
+        }
     }
 }

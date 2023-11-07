@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -31,6 +32,11 @@ public class MatchModel implements Serializable {
     @ManyToOne
     private ClubModel visitingClub;
 
+    @ManyToOne
+    private StadiumModel stadiumModel;
+
+    private LocalDateTime dateTime;
+
     private Integer homeGoals;
 
     private Integer visitingGoals;
@@ -38,7 +44,6 @@ public class MatchModel implements Serializable {
     @Enumerated(EnumType.STRING)
     private Result result;
 
-    @ManyToOne
-    private StadiumModel stadiumModel;
+
 
 }
