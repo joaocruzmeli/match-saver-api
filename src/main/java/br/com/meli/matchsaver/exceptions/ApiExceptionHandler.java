@@ -1,7 +1,5 @@
 package br.com.meli.matchsaver.exceptions;
 
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,13 +41,13 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleEntidadeNaoEncontradaException(EntityNotFoundException exception) {
+    public ResponseEntity<ErrorMessage> handleEntityNotFoundException(EntityNotFoundException exception) {
         ErrorMessage errorResponse = new ErrorMessage(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.value(), exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
     @ExceptionHandler(InvalidMatchTimeException.class)
-    public ResponseEntity<ErrorMessage> handleEntidadeNaoEncontradaException(InvalidMatchTimeException exception) {
+    public ResponseEntity<ErrorMessage> handleInvalidMatchTimeException(InvalidMatchTimeException exception) {
         ErrorMessage errorResponse = new ErrorMessage(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.value(), exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
