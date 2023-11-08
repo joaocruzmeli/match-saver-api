@@ -43,7 +43,4 @@ public class MatchModel implements Serializable {
 
     @Enumerated(EnumType.STRING)
     private Result result;
-
-
-
 }

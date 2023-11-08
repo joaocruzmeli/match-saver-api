@@ -3,6 +3,7 @@ package br.com.meli.matchsaver.controller;
 import br.com.meli.matchsaver.model.MatchModel;
 import br.com.meli.matchsaver.model.dto.MatchDto;
 import br.com.meli.matchsaver.service.MatchService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,13 +48,13 @@ public class MatchController {
     }
 
     @PostMapping
-    ResponseEntity<MatchModel> save(@RequestBody MatchDto matchDto){
+    ResponseEntity<MatchModel> save(@Valid @RequestBody MatchDto matchDto){
         MatchModel newMatch = matchService.save(matchDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(newMatch);
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<MatchDto> update(@PathVariable Long id, @RequestBody MatchDto matchDto){
+    ResponseEntity<MatchDto> update(@PathVariable Long id, @Valid @RequestBody MatchDto matchDto){
         MatchDto updatedMatch = matchService.update(id, matchDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedMatch);
     }

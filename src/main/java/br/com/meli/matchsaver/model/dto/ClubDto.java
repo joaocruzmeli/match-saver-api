@@ -1,8 +1,8 @@
 package br.com.meli.matchsaver.model.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record ClubDto(
-        @NotNull
+        @NotBlank(message = "name cannot be empty")
         String name) {
 }

@@ -1,9 +1,9 @@
 package br.com.meli.matchsaver.model.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record StadiumDto(
-        @NotNull
+        @NotBlank(message = "name cannot be empty")
         String name,
         Long capacity) {
 }

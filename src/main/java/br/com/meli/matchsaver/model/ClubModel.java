@@ -26,6 +26,7 @@ public class ClubModel implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(unique = true)
     private String name;
 
     @JsonIgnore

@@ -3,6 +3,7 @@ package br.com.meli.matchsaver.controller;
 import br.com.meli.matchsaver.model.StadiumModel;
 import br.com.meli.matchsaver.model.dto.StadiumDto;
 import br.com.meli.matchsaver.service.StadiumService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +29,13 @@ public class StadiumController {
     }
 
     @PostMapping
-    ResponseEntity<StadiumModel> save(@RequestBody StadiumDto stadiumDto){
+    ResponseEntity<StadiumModel> save(@Valid @RequestBody StadiumDto stadiumDto){
         StadiumModel newStadium = stadiumService.save(stadiumDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(newStadium);
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<StadiumDto> update(@PathVariable Long id, @RequestBody StadiumDto stadiumDto){
+    ResponseEntity<StadiumDto> update(@PathVariable Long id, @Valid @RequestBody StadiumDto stadiumDto){
         StadiumDto updatedStadium = stadiumService.update(id, stadiumDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedStadium);
     }
