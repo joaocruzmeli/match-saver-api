@@ -4,6 +4,7 @@ import br.com.meli.matchsaver.exceptions.EntityNotFoundException;
 import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.dto.ClubDto;
 import br.com.meli.matchsaver.repository.ClubRepository;
+import br.com.meli.matchsaver.utils.mapper.ClubMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +17,14 @@ public class ClubService {
     @Autowired
     private ClubRepository clubRepository;
 
+    @Autowired
+    private ClubMapper clubMapper;
+
     public List<ClubDto> getAll(){
         List<ClubModel> clubModels = clubRepository.findAll();
         List<ClubDto> clubDtos = new ArrayList<>();
         for (ClubModel clubModel : clubModels) {
-            clubDtos.add(new ClubDto(clubModel.getName()));
+            clubDtos.add(clubMapper.toClubDto(clubModel));
         }
         return clubDtos;
     }
@@ -28,12 +32,11 @@ public class ClubService {
     public ClubDto getById(Long id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Club"));
-        return new ClubDto(clubModelFound.getName());
+        return clubMapper.toClubDto(clubModelFound);
     }
 
     public ClubModel save(ClubDto clubDto){
-        ClubModel clubModel = new ClubModel();
-        clubModel.setName(clubDto.name());
+        ClubModel clubModel = clubMapper.toClubModel(clubDto);
         clubRepository.save(clubModel);
         return clubModel;
     }
@@ -45,7 +48,7 @@ public class ClubService {
             clubModelFound.setName(clubDto.name());
         }
         clubRepository.save(clubModelFound);
-        return new ClubDto(clubModelFound.getName());
+        return clubMapper.toClubDto(clubModelFound);
     }
 
     public String delete(Long id){

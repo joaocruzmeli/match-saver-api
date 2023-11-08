@@ -2,6 +2,7 @@ package br.com.meli.matchsaver.model.dto;
 
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
 public record MatchDto(
@@ -13,10 +14,10 @@ public record MatchDto(
         String stadium,
         @NotBlank(message = "date and hour club cannot be empty")
         String dateTime,
-        @NotBlank(message = "home goals cannot be empty")
+        @NotNull(message = "home goals cannot be empty")
         @PositiveOrZero(message = "home goals must be greater than or equal to zero")
         Integer homeGoals,
-        @NotBlank(message = "home goals cannot be empty")
+        @NotNull(message = "home goals cannot be empty")
         @PositiveOrZero(message = "visiting goals must be greater than or equal to zero")
         Integer visitingGoals){
 }

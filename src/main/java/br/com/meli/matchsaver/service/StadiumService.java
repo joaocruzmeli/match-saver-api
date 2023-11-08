@@ -4,6 +4,7 @@ import br.com.meli.matchsaver.exceptions.EntityNotFoundException;
 import br.com.meli.matchsaver.model.StadiumModel;
 import br.com.meli.matchsaver.model.dto.StadiumDto;
 import br.com.meli.matchsaver.repository.StadiumRepository;
+import br.com.meli.matchsaver.utils.mapper.StadiumMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,46 +16,47 @@ public class StadiumService {
     @Autowired
     private StadiumRepository stadiumRepository;
 
+    @Autowired
+    private StadiumMapper stadiumMapper;
+
     public List<StadiumDto> getAll(){
         List<StadiumModel> stadiumModels = stadiumRepository.findAll();
         List<StadiumDto> stadiumDtos = new ArrayList<>();
         for (StadiumModel stadiumModel : stadiumModels) {
-            stadiumDtos.add(new StadiumDto(stadiumModel.getName(), stadiumModel.getCapacity()));
+            stadiumDtos.add(stadiumMapper.toStadiumDto(stadiumModel));
         }
         return stadiumDtos;
     }
 
     public StadiumDto getById(Long id){
-        StadiumModel stadiumFound = stadiumRepository.findById(id).orElseThrow(
+        StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
-        return new StadiumDto(stadiumFound.getName(), stadiumFound.getCapacity());
+        return stadiumMapper.toStadiumDto(stadiumModelFound);
     }
 
     public StadiumModel save(StadiumDto stadiumDto){
-        StadiumModel stadiumModel = new StadiumModel();
-        stadiumModel.setName(stadiumDto.name());
-        stadiumModel.setCapacity(stadiumDto.capacity());
+        StadiumModel stadiumModel = stadiumMapper.toStadiumModel(stadiumDto);
         stadiumRepository.save(stadiumModel);
         return stadiumModel;
     }
 
     public StadiumDto update(Long id, StadiumDto stadiumDto){
-        StadiumModel stadiumFound = stadiumRepository.findById(id).orElseThrow(
+        StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
         if (stadiumDto.name() != null){
-            stadiumFound.setName(stadiumDto.name());
+            stadiumModelFound.setName(stadiumDto.name());
         }
         if (stadiumDto.capacity() != null){
-            stadiumFound.setCapacity(stadiumDto.capacity());
+            stadiumModelFound.setCapacity(stadiumDto.capacity());
         }
-        stadiumRepository.save(stadiumFound);
-        return new StadiumDto(stadiumFound.getName(), stadiumFound.getCapacity());
+        stadiumRepository.save(stadiumModelFound);
+        return stadiumMapper.toStadiumDto(stadiumModelFound);
     }
 
     public String delete(Long id){
-        StadiumModel stadiumFound = stadiumRepository.findById(id).orElseThrow(
+        StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
-        stadiumRepository.delete(stadiumFound);
+        stadiumRepository.delete(stadiumModelFound);
         return "Stadium deleted successfully";
     }
 }
