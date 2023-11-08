@@ -14,6 +14,7 @@ import br.com.meli.matchsaver.utils.mapper.MatchMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -118,6 +119,9 @@ public class MatchService {
 
         validateMatchDateTime(matchDto.dateTime());
         validateMatchStadium(matchDto.stadium(), convertDateTime(matchDto.dateTime()));
+        validateMatchSameClub(homeClubModel);
+        validateMatchSameClub(visitingClubModel);
+
 
         //TODO -> CONVERTER UTILIZANDO O MAPPER
         MatchModel matchModel = new MatchModel();
@@ -206,11 +210,24 @@ public class MatchService {
     }
 
     public void validateMatchStadium(String name, LocalDateTime dateTime){
-        List<MatchModel> matchModels = matchRepository.findByStadiumModelNameContainingAndDateTime(name, dateTime);
+        List<MatchModel> matchModels = matchRepository.findAllByStadiumModelNameContainingIgnoreCaseAndDateTime(name, dateTime);
         if (!matchModels.isEmpty()){
             throw new InvalidMatchTimeException("Invalid date and time. There is already a match in this stadium at this date and time.");
         }
     }
 
-    public void validateMatch
+    public void validateMatchSameClub(ClubModel clubModel){
+        List<MatchModel> matchModels = matchRepository.findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(clubModel.getName(), clubModel.getName());
+        if (!matchModels.isEmpty()){
+            MatchModel firstMatch = matchModels.get(0);
+            for (int i = 1; i < matchModels.size(); i++) {
+                long durationDiff = Duration.between(firstMatch.getDateTime(), matchModels.get(i).getDateTime()).toDays();
+                if (durationDiff <=2 ){
+                    throw new InvalidMatchTimeException("Invalid date and time. The club '" + clubModel.getName() + " played less than 2 days ago.");
+                }
+                firstMatch = matchModels.get(i);
+            }
+        }
+
+    }
 }
