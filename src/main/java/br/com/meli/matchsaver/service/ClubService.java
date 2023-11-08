@@ -1,5 +1,6 @@
 package br.com.meli.matchsaver.service;
 
+import br.com.meli.matchsaver.exceptions.EntityNotFoundException;
 import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.dto.ClubDto;
 import br.com.meli.matchsaver.repository.ClubRepository;
@@ -26,7 +27,7 @@ public class ClubService {
 
     public ClubDto getById(Long id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Club not found"));
+                () -> new EntityNotFoundException("Club"));
         return new ClubDto(clubModelFound.getName());
     }
 
@@ -39,7 +40,7 @@ public class ClubService {
 
     public ClubDto update(Long id, ClubDto clubDto){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Club not found"));
+                () -> new EntityNotFoundException("Club"));
         if (clubDto.name() != null){
             clubModelFound.setName(clubDto.name());
         }
@@ -49,7 +50,7 @@ public class ClubService {
 
     public String delete(Long id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Club not found"));
+                () -> new EntityNotFoundException("Club"));
         clubRepository.delete(clubModelFound);
         return "Club deleted successfully.";
     }

@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface MatchRepository extends JpaRepository<MatchModel, Long> {
-    List<MatchModel> findByStadiumModelAndAndDateTime(String stadiumName, LocalDateTime dateTime);
+    List<MatchModel> findByStadiumModelNameContainingAndDateTime(String stadiumName, LocalDateTime dateTime);
 }

@@ -1,5 +1,6 @@
 package br.com.meli.matchsaver.service;
 
+import br.com.meli.matchsaver.exceptions.EntityNotFoundException;
 import br.com.meli.matchsaver.model.StadiumModel;
 import br.com.meli.matchsaver.model.dto.StadiumDto;
 import br.com.meli.matchsaver.repository.StadiumRepository;
@@ -25,7 +26,7 @@ public class StadiumService {
 
     public StadiumDto getById(Long id){
         StadiumModel stadiumFound = stadiumRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Stadium not found"));
+                () -> new EntityNotFoundException("Stadium"));
         return new StadiumDto(stadiumFound.getName(), stadiumFound.getCapacity());
     }
 
@@ -39,7 +40,7 @@ public class StadiumService {
 
     public StadiumDto update(Long id, StadiumDto stadiumDto){
         StadiumModel stadiumFound = stadiumRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Stadium not found"));
+                () -> new EntityNotFoundException("Stadium"));
         if (stadiumDto.name() != null){
             stadiumFound.setName(stadiumDto.name());
         }
@@ -52,7 +53,7 @@ public class StadiumService {
 
     public String delete(Long id){
         StadiumModel stadiumFound = stadiumRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Stadium not found"));
+                () -> new EntityNotFoundException("Stadium"));
         stadiumRepository.delete(stadiumFound);
         return "Stadium deleted successfully";
     }

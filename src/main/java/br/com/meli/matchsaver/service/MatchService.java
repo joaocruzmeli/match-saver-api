@@ -1,6 +1,8 @@
 package br.com.meli.matchsaver.service;
 
 import br.com.meli.matchsaver.enums.Result;
+import br.com.meli.matchsaver.exceptions.EntityNotFoundException;
+import br.com.meli.matchsaver.exceptions.InvalidMatchTimeException;
 import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.MatchModel;
 import br.com.meli.matchsaver.model.StadiumModel;
@@ -15,9 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class MatchService {
@@ -43,7 +43,7 @@ public class MatchService {
 
     public MatchDto getById(Long id){
         MatchModel matchFound = matchRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Match not found"));
+                () -> new EntityNotFoundException("Match not found"));
 
         return new MatchDto(matchFound.getHomeClub().getName(), matchFound.getVisitingClub().getName(),
                 matchFound.getStadiumModel().getName(), matchFound.getDateTime().toString(), matchFound.getHomeGoals(), matchFound.getVisitingGoals());
@@ -75,7 +75,7 @@ public class MatchService {
 
     public List<MatchModel> getAllByClubName(String name, boolean isClubHome){
         ClubModel clubModel = clubRepository.findByName(name).orElseThrow(
-                () -> new RuntimeException("Club " + name + " not found"));
+                () -> new EntityNotFoundException("Club " + name));
         List<MatchModel> matchModels = matchRepository.findAll();
         List<MatchModel> matchClubs = new ArrayList<>();
         for (MatchModel match: matchModels) {
@@ -91,7 +91,7 @@ public class MatchService {
 
     public List<MatchModel> getAllByStadium(String name){
         StadiumModel stadiumModel = stadiumRepository.findByName(name).orElseThrow(
-                () -> new RuntimeException("Stadium " + name + " not found"));
+                () -> new EntityNotFoundException("Stadium " + name));
         List<MatchModel> matchModels = matchRepository.findAll();
         List<MatchModel> matchStadiums = new ArrayList<>();
         for (MatchModel match: matchModels) {;
@@ -106,13 +106,13 @@ public class MatchService {
     public MatchModel save(MatchDto matchDto){
 
         ClubModel homeClubModel = clubRepository.findByName(matchDto.homeClub()).orElseThrow(
-                () -> new RuntimeException("Club " + matchDto.homeClub() + " not found"));
+                () -> new EntityNotFoundException("Club " + matchDto.homeClub()));
 
         ClubModel visitingClubModel = clubRepository.findByName(matchDto.visitingClub()).orElseThrow(
-                () -> new RuntimeException("Club " + matchDto.visitingClub() + " not found"));
+                () -> new EntityNotFoundException("Club " + matchDto.visitingClub()));
 
         StadiumModel stadium = stadiumRepository.findByName(matchDto.stadium()).orElseThrow(
-                () -> new RuntimeException("Stadium " + matchDto.stadium() + " not found"));
+                () -> new EntityNotFoundException("Stadium " + matchDto.stadium()));
 
         MatchModel matchModel = new MatchModel();
         matchModel.setHomeClub(homeClubModel);
@@ -122,7 +122,7 @@ public class MatchService {
         matchModel.setStadiumModel(stadium);
         matchModel.setDateTime(convertDateTime(matchDto.dateTime()));
 
-        matchModel.setResult(retornaResultado(matchModel));
+        matchModel.setResult(returnResult(matchModel));
 
         matchRepository.save(matchModel);
 
@@ -131,16 +131,16 @@ public class MatchService {
 
     public MatchDto update(Long id, MatchDto matchDto){
         MatchModel matchFound = matchRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Match not found"));
+                () -> new EntityNotFoundException("Match"));
 
         if (matchDto.homeClub() != null){
             ClubModel homeClub = clubRepository.findByName(matchDto.homeClub()).orElseThrow(
-                    () -> new RuntimeException("Club " + matchDto.homeClub() + " not found"));
+                    () -> new EntityNotFoundException("Club " + matchDto.homeClub()));
             matchFound.setHomeClub(homeClub);
         }
         if (matchDto.visitingClub() != null){
             ClubModel visitingClub = clubRepository.findByName(matchDto.visitingClub()).orElseThrow(
-                    () -> new RuntimeException("Club  " + matchDto.visitingClub() + " not found"));
+                    () -> new EntityNotFoundException("Club  " + matchDto.visitingClub()));
             matchFound.setVisitingClub(visitingClub);
         }
         if (matchDto.homeGoals() != null){
@@ -151,14 +151,14 @@ public class MatchService {
         }
         if (matchDto.stadium() != null){
             StadiumModel stadiumModel = stadiumRepository.findByName(matchDto.stadium()).orElseThrow(
-                    () -> new RuntimeException("Club  " + matchDto.visitingClub() + " not found"));
+                    () -> new EntityNotFoundException("Club  " + matchDto.visitingClub()));
             matchFound.setStadiumModel(stadiumModel);
         }
         if (matchDto.dateTime() != null){
             matchFound.setDateTime(convertDateTime(matchDto.dateTime()));
         }
 
-        matchFound.setResult(retornaResultado(matchFound));
+        matchFound.setResult(returnResult(matchFound));
 
         matchRepository.save(matchFound);
         return new MatchDto(matchFound.getHomeClub().getName(), matchFound.getVisitingClub().getName(),
@@ -167,11 +167,11 @@ public class MatchService {
 
     public String delete(Long id){
         MatchModel matchFound = matchRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Match not found"));
+                () -> new EntityNotFoundException("Match"));
         matchRepository.delete(matchFound);
         return "Match deleted successfully.";
     }
-    public Result retornaResultado (MatchModel matchModel){
+    public Result returnResult (MatchModel matchModel){
         if (matchModel.getHomeGoals() > matchModel.getVisitingGoals()){
             return Result.HOME_CLUB_WIN;
         }
@@ -186,24 +186,24 @@ public class MatchService {
         try {
             return LocalDateTime.parse(dateTime, formatter);
         } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid date and time format. Use the format dd/MM/yyyy HH:mm");
+            throw new InvalidMatchTimeException("Invalid date and time format. Use the format dd/MM/yyyy HH:mm");
         }
     }
 
     public void validateMatchDateTime(String dateTime){
         LocalDateTime matchDateTime = convertDateTime(dateTime);
         if (matchDateTime.getHour() < 8 || matchDateTime.getHour() > 22){
-            throw new IllegalArgumentException("Invalid hour. Use hour after 8h and before 22h");
+            throw new InvalidMatchTimeException("Invalid hour. Use hour after 8h and before 22h");
         }
         if (matchDateTime.isAfter(LocalDateTime.now())){
-            throw new IllegalArgumentException("Invalid date time. Match date and time are in the future");
+            throw new InvalidMatchTimeException("Invalid date time. Match date and time are in the future");
         }
     }
 
     public void validateMatchStadium(String name, LocalDateTime dateTime){
-        List<MatchModel> matchModels = matchRepository.findByStadiumModelAndAndDateTime(name, dateTime);
+        List<MatchModel> matchModels = matchRepository.findByStadiumModelNameContainingAndDateTime(name, dateTime);
         if (!matchModels.isEmpty()){
-            throw new IllegalArgumentException("Invalid date time. There is already a match at this date and time.");
+            throw new InvalidMatchTimeException("Invalid date time. There is already a match at this date and time.");
         }
     }
 }
