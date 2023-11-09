@@ -18,7 +18,7 @@ public class MatchMapper {
         MatchDto matchDto = new MatchDto(
                 matchModel.getHomeClub().getName(),
                 matchModel.getVisitingClub().getName(),
-                matchModel.getStadiumModel().getName(),
+                matchModel.getStadium().getName(),
                 matchModel.getDateTime().toString(),
                 matchModel.getHomeGoals(),
                 matchModel.getVisitingGoals());

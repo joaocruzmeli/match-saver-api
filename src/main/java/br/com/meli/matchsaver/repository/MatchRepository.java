@@ -9,15 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface MatchRepository extends JpaRepository<MatchModel, Long> {
-    List<MatchModel> findAllByStadiumModelNameContainingIgnoreCaseAndDateTime(String stadiumName, LocalDateTime dateTime);
-
-    @Query("SELECT MatchModel FROM MatchModel " +
-            "WHERE (homeClub = :club OR visitingClub = :club) " +
-            "ORDER BY dateTime")
-    List<MatchModel> findAllMatchesForClub(@Param("club") ClubModel club);
+public interface MatchRepository extends JpaRepository<MatchModel, UUID> {
+    List<MatchModel> findAllByStadiumNameContainingIgnoreCaseAndDateTime(String stadiumName, LocalDateTime dateTime);
 
     List<MatchModel> findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(String homeClub, String visitingClub);
 }

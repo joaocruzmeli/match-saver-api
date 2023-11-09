@@ -13,6 +13,7 @@ import br.com.meli.matchsaver.repository.StadiumRepository;
 import br.com.meli.matchsaver.utils.mapper.MatchMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MatchService {
@@ -44,7 +46,7 @@ public class MatchService {
         return matchDtos;
     }
 
-    public MatchDto getById(Long id){
+    public MatchDto getById(UUID id){
         MatchModel matchModelFound = matchRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Match not found"));
 
@@ -97,7 +99,7 @@ public class MatchService {
         List<MatchModel> matchModels = matchRepository.findAll();
         List<MatchModel> matchStadiums = new ArrayList<>();
         for (MatchModel match: matchModels) {;
-            if (match.getStadiumModel().getName().equalsIgnoreCase(stadiumModelFound.getName())){
+            if (match.getStadium().getName().equalsIgnoreCase(stadiumModelFound.getName())){
                 matchStadiums.add(match);
             }
         }
@@ -129,7 +131,7 @@ public class MatchService {
         matchModel.setVisitingClub(visitingClubModel);
         matchModel.setHomeGoals(matchDto.homeGoals());
         matchModel.setVisitingGoals(matchDto.visitingGoals());
-        matchModel.setStadiumModel(stadium);
+        matchModel.setStadium(stadium);
         matchModel.setDateTime(convertDateTime(matchDto.dateTime()));
 
         matchModel.setResult(returnResult(matchModel));
@@ -139,7 +141,9 @@ public class MatchService {
         return matchModel;
     }
 
-    public MatchDto update(Long id, MatchDto matchDto){
+    public MatchDto update(UUID id, MatchDto matchDto){
+        validateMatchGoalsPositive(matchDto);
+
         MatchModel matchModelFound = matchRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Match"));
 
@@ -162,7 +166,7 @@ public class MatchService {
         if (matchDto.stadium() != null){
             StadiumModel stadiumModel = stadiumRepository.findByName(matchDto.stadium()).orElseThrow(
                     () -> new EntityNotFoundException("Club  " + matchDto.visitingClub()));
-            matchModelFound.setStadiumModel(stadiumModel);
+            matchModelFound.setStadium(stadiumModel);
         }
         if (matchDto.dateTime() != null){
             matchModelFound.setDateTime(convertDateTime(matchDto.dateTime()));
@@ -174,7 +178,7 @@ public class MatchService {
         return matchMapper.toMatchDto(matchModelFound);
     }
 
-    public String delete(Long id){
+    public String delete(UUID id){
         MatchModel matchFound = matchRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Match"));
         matchRepository.delete(matchFound);
@@ -210,7 +214,7 @@ public class MatchService {
     }
 
     public void validateMatchStadium(String name, LocalDateTime dateTime){
-        List<MatchModel> matchModels = matchRepository.findAllByStadiumModelNameContainingIgnoreCaseAndDateTime(name, dateTime);
+        List<MatchModel> matchModels = matchRepository.findAllByStadiumNameContainingIgnoreCaseAndDateTime(name, dateTime);
         if (!matchModels.isEmpty()){
             throw new InvalidMatchTimeException("Invalid date and time. There is already a match in this stadium at this date and time.");
         }
@@ -223,11 +227,14 @@ public class MatchService {
             for (int i = 1; i < matchModels.size(); i++) {
                 long durationDiff = Duration.between(firstMatch.getDateTime(), matchModels.get(i).getDateTime()).toDays();
                 if (durationDiff <=2 ){
-                    throw new InvalidMatchTimeException("Invalid date and time. The club '" + clubModel.getName() + " played less than 2 days ago.");
+                    throw new InvalidMatchTimeException("Invalid date and time. The club '" + clubModel.getName() + "' played less than 2 days ago.");
                 }
                 firstMatch = matchModels.get(i);
             }
         }
+    }
 
+    public void validateMatchGoalsPositive(MatchDto matchDto){
+        if (matchDto.homeGoals() < 0 || matchDto.visitingGoals() < 0 )  throw new IllegalArgumentException("goals must be greater than or equal to zero");
     }
 }

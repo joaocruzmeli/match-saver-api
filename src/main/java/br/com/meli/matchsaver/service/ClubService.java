@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ClubService {
@@ -29,7 +30,7 @@ public class ClubService {
         return clubDtos;
     }
 
-    public ClubDto getById(Long id){
+    public ClubDto getById(UUID id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Club"));
         return clubMapper.toClubDto(clubModelFound);
@@ -41,7 +42,7 @@ public class ClubService {
         return clubModel;
     }
 
-    public ClubDto update(Long id, ClubDto clubDto){
+    public ClubDto update(UUID id, ClubDto clubDto){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Club"));
         if (clubDto.name() != null){
@@ -51,7 +52,7 @@ public class ClubService {
         return clubMapper.toClubDto(clubModelFound);
     }
 
-    public String delete(Long id){
+    public String delete(UUID id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Club"));
         clubRepository.delete(clubModelFound);

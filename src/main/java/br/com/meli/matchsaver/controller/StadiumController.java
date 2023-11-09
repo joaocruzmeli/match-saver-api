@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/stadiums")
@@ -24,7 +25,7 @@ public class StadiumController {
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<StadiumDto> getById(@PathVariable Long id){
+    ResponseEntity<StadiumDto> getById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(stadiumService.getById(id));
     }
 
@@ -35,13 +36,13 @@ public class StadiumController {
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<StadiumDto> update(@PathVariable Long id, @Valid @RequestBody StadiumDto stadiumDto){
+    ResponseEntity<StadiumDto> update(@PathVariable UUID id, @RequestBody StadiumDto stadiumDto){
         StadiumDto updatedStadium = stadiumService.update(id, stadiumDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedStadium);
     }
 
     @DeleteMapping("/{id}")
-    ResponseEntity<String>delete(@PathVariable Long id){
+    ResponseEntity<String>delete(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(stadiumService.delete(id));
     }
 }

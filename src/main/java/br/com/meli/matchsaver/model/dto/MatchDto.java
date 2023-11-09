@@ -17,7 +17,7 @@ public record MatchDto(
         @NotNull(message = "home goals cannot be empty")
         @PositiveOrZero(message = "home goals must be greater than or equal to zero")
         Integer homeGoals,
-        @NotNull(message = "home goals cannot be empty")
+        @NotNull(message = "visiting goals cannot be empty")
         @PositiveOrZero(message = "visiting goals must be greater than or equal to zero")
         Integer visitingGoals){
 }

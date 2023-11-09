@@ -32,7 +32,7 @@ public class StadiumModel implements Serializable {
     private Long capacity;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "stadiumModel")
+    @OneToMany(mappedBy = "stadium")
     private List<MatchModel> matchModels;
 
 }

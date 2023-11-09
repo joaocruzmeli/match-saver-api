@@ -33,7 +33,7 @@ public class MatchModel implements Serializable {
     private ClubModel visitingClub;
 
     @ManyToOne
-    private StadiumModel stadiumModel;
+    private StadiumModel stadium;
 
     private LocalDateTime dateTime;
 

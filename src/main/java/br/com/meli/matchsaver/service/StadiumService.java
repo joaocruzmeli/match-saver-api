@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class StadiumService {
@@ -28,7 +29,7 @@ public class StadiumService {
         return stadiumDtos;
     }
 
-    public StadiumDto getById(Long id){
+    public StadiumDto getById(UUID id){
         StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
         return stadiumMapper.toStadiumDto(stadiumModelFound);
@@ -40,7 +41,7 @@ public class StadiumService {
         return stadiumModel;
     }
 
-    public StadiumDto update(Long id, StadiumDto stadiumDto){
+    public StadiumDto update(UUID id, StadiumDto stadiumDto){
         StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
         if (stadiumDto.name() != null){
@@ -53,7 +54,7 @@ public class StadiumService {
         return stadiumMapper.toStadiumDto(stadiumModelFound);
     }
 
-    public String delete(Long id){
+    public String delete(UUID id){
         StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
         stadiumRepository.delete(stadiumModelFound);

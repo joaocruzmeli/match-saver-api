@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/matchs")
@@ -23,7 +24,7 @@ public class MatchController {
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<MatchDto> getById(@PathVariable Long id){
+    ResponseEntity<MatchDto> getById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getById(id));
     }
 
@@ -54,13 +55,13 @@ public class MatchController {
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<MatchDto> update(@PathVariable Long id, @Valid @RequestBody MatchDto matchDto){
+    ResponseEntity<MatchDto> update(@PathVariable UUID id, @RequestBody MatchDto matchDto){
         MatchDto updatedMatch = matchService.update(id, matchDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedMatch);
     }
 
     @DeleteMapping("/{id}")
-    ResponseEntity<String>delete(@PathVariable Long id){
+    ResponseEntity<String>delete(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.delete(id));
     }
 }
