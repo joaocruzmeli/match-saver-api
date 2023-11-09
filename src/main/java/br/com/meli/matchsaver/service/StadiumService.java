@@ -17,14 +17,11 @@ public class StadiumService {
     @Autowired
     private StadiumRepository stadiumRepository;
 
-    @Autowired
-    private StadiumMapper stadiumMapper;
-
     public List<StadiumDto> getAll(){
         List<StadiumModel> stadiumModels = stadiumRepository.findAll();
         List<StadiumDto> stadiumDtos = new ArrayList<>();
         for (StadiumModel stadiumModel : stadiumModels) {
-            stadiumDtos.add(stadiumMapper.toStadiumDto(stadiumModel));
+            stadiumDtos.add(StadiumMapper.INSTANCE.toStadiumDTO(stadiumModel));
         }
         return stadiumDtos;
     }
@@ -32,26 +29,26 @@ public class StadiumService {
     public StadiumDto getById(UUID id){
         StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
-        return stadiumMapper.toStadiumDto(stadiumModelFound);
+        return StadiumMapper.INSTANCE.toStadiumDTO(stadiumModelFound);
     }
 
-    public StadiumModel save(StadiumDto stadiumDto){
-        StadiumModel stadiumModel = stadiumMapper.toStadiumModel(stadiumDto);
+    public StadiumDto save(StadiumDto stadiumDto){
+        StadiumModel stadiumModel = StadiumMapper.INSTANCE.toStadiumModel(stadiumDto);
         stadiumRepository.save(stadiumModel);
-        return stadiumModel;
+        return StadiumMapper.INSTANCE.toStadiumDTO(stadiumModel);
     }
 
     public StadiumDto update(UUID id, StadiumDto stadiumDto){
         StadiumModel stadiumModelFound = stadiumRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Stadium"));
-        if (stadiumDto.name() != null){
-            stadiumModelFound.setName(stadiumDto.name());
+        if (stadiumDto.getName() != null){
+            stadiumModelFound.setName(stadiumDto.getName());
         }
-        if (stadiumDto.capacity() != null){
-            stadiumModelFound.setCapacity(stadiumDto.capacity());
+        if (stadiumDto.getCapacity() != null){
+            stadiumModelFound.setCapacity(stadiumDto.getCapacity());
         }
         stadiumRepository.save(stadiumModelFound);
-        return stadiumMapper.toStadiumDto(stadiumModelFound);
+        return StadiumMapper.INSTANCE.toStadiumDTO(stadiumModelFound);
     }
 
     public String delete(UUID id){

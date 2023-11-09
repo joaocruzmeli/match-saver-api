@@ -2,18 +2,20 @@ package br.com.meli.matchsaver.utils.mapper;
 
 import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.dto.ClubDto;
-import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
-@Component
-public class ClubMapper {
-    public ClubModel toClubModel (ClubDto clubDto){
-        ClubModel clubModel = new ClubModel();
-        BeanUtils.copyProperties(clubDto, clubModel);
-        return clubModel;
-    }
+@Mapper
+public interface ClubMapper {
 
-    public ClubDto toClubDto (ClubModel clubModel){
-        return new ClubDto(clubModel.getName());
-    }
+    ClubMapper INSTANCE = Mappers.getMapper(ClubMapper.class);
+
+    ClubDto toClubDTO(ClubModel clubModel);
+
+    @Mapping(target = "homeMatches", ignore = true)
+    @Mapping(target = "visitingMatches", ignore = true)
+    ClubModel toClubModel(ClubDto clubDto);
+
+    ClubModel map(String name);
 }

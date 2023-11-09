@@ -18,14 +18,11 @@ public class ClubService {
     @Autowired
     private ClubRepository clubRepository;
 
-    @Autowired
-    private ClubMapper clubMapper;
-
     public List<ClubDto> getAll(){
         List<ClubModel> clubModels = clubRepository.findAll();
         List<ClubDto> clubDtos = new ArrayList<>();
         for (ClubModel clubModel : clubModels) {
-            clubDtos.add(clubMapper.toClubDto(clubModel));
+            clubDtos.add(ClubMapper.INSTANCE.toClubDTO(clubModel));
         }
         return clubDtos;
     }
@@ -33,23 +30,23 @@ public class ClubService {
     public ClubDto getById(UUID id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Club"));
-        return clubMapper.toClubDto(clubModelFound);
+        return ClubMapper.INSTANCE.toClubDTO(clubModelFound);
     }
 
-    public ClubModel save(ClubDto clubDto){
-        ClubModel clubModel = clubMapper.toClubModel(clubDto);
+    public ClubDto save(ClubDto clubDto){
+        ClubModel clubModel = ClubMapper.INSTANCE.toClubModel(clubDto);
         clubRepository.save(clubModel);
-        return clubModel;
+        return ClubMapper.INSTANCE.toClubDTO(clubModel);
     }
 
     public ClubDto update(UUID id, ClubDto clubDto){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Club"));
-        if (clubDto.name() != null){
-            clubModelFound.setName(clubDto.name());
+        if (clubDto.getName() != null){
+            clubModelFound.setName(clubDto.getName());
         }
         clubRepository.save(clubModelFound);
-        return clubMapper.toClubDto(clubModelFound);
+        return ClubMapper.INSTANCE.toClubDTO(clubModelFound);
     }
 
     public String delete(UUID id){
