@@ -1,6 +1,5 @@
 package br.com.meli.matchsaver.controller;
 
-import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.dto.ClubDto;
 import br.com.meli.matchsaver.service.ClubService;
 import jakarta.validation.Valid;
@@ -30,8 +29,8 @@ public class ClubController {
     }
 
     @PostMapping
-    ResponseEntity<ClubModel> save(@Valid @RequestBody ClubDto clubDto){
-        ClubModel newClub = clubService.save(clubDto);
+    ResponseEntity<ClubDto> save(@Valid @RequestBody ClubDto clubDto){
+        ClubDto newClub = clubService.save(clubDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(newClub);
     }
 

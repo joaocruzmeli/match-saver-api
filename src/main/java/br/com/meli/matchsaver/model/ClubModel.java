@@ -31,9 +31,9 @@ public class ClubModel implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "homeClub")
-    private List<MatchModel> homeMatchs;
+    private List<MatchModel> homeMatches;
 
     @JsonIgnore
     @OneToMany(mappedBy = "visitingClub")
-    private List<MatchModel> visitingMatchs;
+    private List<MatchModel> visitingMatches;
 }

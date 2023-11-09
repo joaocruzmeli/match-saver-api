@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "TB_MATCHS")
+@Table(name = "TB_MATCHES")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

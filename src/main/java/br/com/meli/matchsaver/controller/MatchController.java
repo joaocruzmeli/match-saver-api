@@ -1,7 +1,7 @@
 package br.com.meli.matchsaver.controller;
 
-import br.com.meli.matchsaver.model.MatchModel;
 import br.com.meli.matchsaver.model.dto.MatchDto;
+import br.com.meli.matchsaver.model.dto.MatchResponseDto;
 import br.com.meli.matchsaver.service.MatchService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,50 +13,50 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/matchs")
+@RequestMapping("/matches")
 public class MatchController {
     @Autowired
     private MatchService matchService;
 
     @GetMapping
-    ResponseEntity<List<MatchDto>> getAll(){
+    ResponseEntity<List<MatchResponseDto>> getAll(){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAll());
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<MatchDto> getById(@PathVariable UUID id){
+    ResponseEntity<MatchResponseDto> getById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getById(id));
     }
 
     @GetMapping("/trashes")
-    ResponseEntity<List<MatchModel>> getAllTrashes(){
+    ResponseEntity<List<MatchResponseDto>> getAllTrashes(){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllTrashes());
     }
 
     @GetMapping("/goalless")
-    ResponseEntity<List<MatchModel>> getAllGoalless(){
+    ResponseEntity<List<MatchResponseDto>> getAllGoalless(){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllGoalless());
     }
 
     @GetMapping("/club")
-    ResponseEntity<List<MatchModel>> getAllByClubName(@RequestParam String name, @RequestParam boolean isClubHome){
+    ResponseEntity<List<MatchResponseDto>> getAllByClubName(@RequestParam String name, @RequestParam boolean isClubHome){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByClubName(name, isClubHome));
     }
 
     @GetMapping("/stadium")
-    ResponseEntity<List<MatchModel>> getAllByStadium(@RequestParam String name){
+    ResponseEntity<List<MatchResponseDto>> getAllByStadium(@RequestParam String name){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByStadium(name));
     }
 
     @PostMapping
-    ResponseEntity<MatchModel> save(@Valid @RequestBody MatchDto matchDto){
-        MatchModel newMatch = matchService.save(matchDto);
+    ResponseEntity<MatchResponseDto> save(@Valid @RequestBody MatchDto matchDto){
+        MatchResponseDto newMatch = matchService.save(matchDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(newMatch);
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<MatchDto> update(@PathVariable UUID id, @RequestBody MatchDto matchDto){
-        MatchDto updatedMatch = matchService.update(id, matchDto);
+    ResponseEntity<MatchResponseDto> update(@PathVariable UUID id, @RequestBody MatchDto matchDto){
+        MatchResponseDto updatedMatch = matchService.update(id, matchDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedMatch);
     }
 

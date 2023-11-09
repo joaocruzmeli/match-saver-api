@@ -7,13 +7,13 @@ import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.MatchModel;
 import br.com.meli.matchsaver.model.StadiumModel;
 import br.com.meli.matchsaver.model.dto.MatchDto;
+import br.com.meli.matchsaver.model.dto.MatchResponseDto;
 import br.com.meli.matchsaver.repository.ClubRepository;
 import br.com.meli.matchsaver.repository.MatchRepository;
 import br.com.meli.matchsaver.repository.StadiumRepository;
 import br.com.meli.matchsaver.utils.mapper.MatchMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -34,148 +34,146 @@ public class MatchService {
     @Autowired
     private StadiumRepository stadiumRepository;
 
-    @Autowired
-    private MatchMapper matchMapper;
 
-    public List<MatchDto> getAll(){
+
+    public List<MatchResponseDto> getAll(){
         List<MatchModel> matchModels = matchRepository.findAll();
-        List<MatchDto> matchDtos = new ArrayList<>();
+        List<MatchResponseDto> matchDtos = new ArrayList<>();
         for (MatchModel matchModel : matchModels) {
-            matchDtos.add(matchMapper.toMatchDto(matchModel));
+            matchDtos.add(MatchMapper.INSTANCE.toMatchResponseDto(matchModel));
         }
         return matchDtos;
     }
 
-    public MatchDto getById(UUID id){
+    public MatchResponseDto getById(UUID id){
         MatchModel matchModelFound = matchRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Match not found"));
 
-        return matchMapper.toMatchDto(matchModelFound);
+        return MatchMapper.INSTANCE.toMatchResponseDto(matchModelFound);
     }
 
-    public List<MatchModel> getAllTrashes(){
+    public List<MatchResponseDto> getAllTrashes(){
         List<MatchModel> matchModels = matchRepository.findAll();
-        List<MatchModel> matchTrashes = new ArrayList<>();
+        List<MatchResponseDto> matchTrashes = new ArrayList<>();
         for (MatchModel match: matchModels) {
             int diffGoals = Math.abs(match.getHomeGoals() - match.getVisitingGoals());
             if (diffGoals >= 3){
-                matchTrashes.add(match);
+                matchTrashes.add(MatchMapper.INSTANCE.toMatchResponseDto(match));
             }
         }
         return matchTrashes;
     }
 
-    public List<MatchModel> getAllGoalless(){
+    public List<MatchResponseDto> getAllGoalless(){
         List<MatchModel> matchModels = matchRepository.findAll();
-        List<MatchModel> matchGoalless = new ArrayList<>();
+        List<MatchResponseDto> matchGoalless = new ArrayList<>();
         for (MatchModel match: matchModels) {
             int diffGoals = Math.abs(match.getHomeGoals() - match.getVisitingGoals());
             if (diffGoals == 0){
-                matchGoalless.add(match);
+                matchGoalless.add(MatchMapper.INSTANCE.toMatchResponseDto(match));
             }
         }
         return matchGoalless;
     }
 
-    public List<MatchModel> getAllByClubName(String name, boolean isClubHome){
+    public List<MatchResponseDto> getAllByClubName(String name, boolean isClubHome){
         ClubModel clubModelFound = clubRepository.findByName(name).orElseThrow(
                 () -> new EntityNotFoundException("Club " + name));
         List<MatchModel> matchModels = matchRepository.findAll();
-        List<MatchModel> matchClubs = new ArrayList<>();
+        List<MatchResponseDto> matchClubs = new ArrayList<>();
         for (MatchModel match: matchModels) {
             boolean isHomeClub = match.getHomeClub().getName().equalsIgnoreCase(clubModelFound.getName());
             boolean isVisitingClub = match.getVisitingClub().getName().equalsIgnoreCase(clubModelFound.getName());
 
             if ((isHomeClub && isClubHome) || (!isClubHome && isVisitingClub)) {
-                matchClubs.add(match);
+                matchClubs.add(MatchMapper.INSTANCE.toMatchResponseDto(match));
             }
         }
         return matchClubs;
     }
 
-    public List<MatchModel> getAllByStadium(String name){
+    public List<MatchResponseDto> getAllByStadium(String name){
         StadiumModel stadiumModelFound = stadiumRepository.findByName(name).orElseThrow(
                 () -> new EntityNotFoundException("Stadium " + name));
         List<MatchModel> matchModels = matchRepository.findAll();
-        List<MatchModel> matchStadiums = new ArrayList<>();
-        for (MatchModel match: matchModels) {;
+        List<MatchResponseDto> matchStadiums = new ArrayList<>();
+        for (MatchModel match: matchModels) {
             if (match.getStadium().getName().equalsIgnoreCase(stadiumModelFound.getName())){
-                matchStadiums.add(match);
+                matchStadiums.add(MatchMapper.INSTANCE.toMatchResponseDto(match));
             }
         }
         return matchStadiums;
     }
 
 
-    public MatchModel save(MatchDto matchDto){
+    public MatchResponseDto save(MatchDto matchDto){
 
-        ClubModel homeClubModel = clubRepository.findByName(matchDto.homeClub()).orElseThrow(
-                () -> new EntityNotFoundException("Club " + matchDto.homeClub()));
+        ClubModel homeClubModel = clubRepository.findByName(matchDto.getHomeClub()).orElseThrow(
+                () -> new EntityNotFoundException("Club " + matchDto.getHomeClub()));
 
-        ClubModel visitingClubModel = clubRepository.findByName(matchDto.visitingClub()).orElseThrow(
-                () -> new EntityNotFoundException("Club " + matchDto.visitingClub()));
+        ClubModel visitingClubModel = clubRepository.findByName(matchDto.getVisitingClub()).orElseThrow(
+                () -> new EntityNotFoundException("Club " + matchDto.getVisitingClub()));
 
-        StadiumModel stadium = stadiumRepository.findByName(matchDto.stadium()).orElseThrow(
-                () -> new EntityNotFoundException("Stadium " + matchDto.stadium()));
-
-
-        validateMatchDateTime(matchDto.dateTime());
-        validateMatchStadium(matchDto.stadium(), convertDateTime(matchDto.dateTime()));
-        validateMatchSameClub(homeClubModel);
-        validateMatchSameClub(visitingClubModel);
+        StadiumModel stadium = stadiumRepository.findByName(matchDto.getStadium()).orElseThrow(
+                () -> new EntityNotFoundException("Stadium " + matchDto.getStadium()));
 
 
-        //TODO -> CONVERTER UTILIZANDO O MAPPER
-        MatchModel matchModel = new MatchModel();
-        matchModel.setHomeClub(homeClubModel);
+        validateMatchDateTime(matchDto.getDateTime());
+        validateMatchStadium(matchDto.getStadium(), convertDateTime(matchDto.getDateTime()));
+        validateMatchSameClubInDays(homeClubModel, convertDateTime(matchDto.getDateTime()));
+        validateMatchSameClubInDays(visitingClubModel, convertDateTime(matchDto.getDateTime()));
+        validateMatchClubs(matchDto.getHomeClub(), matchDto.getVisitingClub());
+
+        //TODO Estudar como melhorar esse mapper
+        MatchModel matchModel = MatchMapper.INSTANCE.toMatchModel(matchDto);
+        matchModel.setDateTime(convertDateTime(matchDto.getDateTime()));
         matchModel.setVisitingClub(visitingClubModel);
-        matchModel.setHomeGoals(matchDto.homeGoals());
-        matchModel.setVisitingGoals(matchDto.visitingGoals());
+        matchModel.setHomeClub(homeClubModel);
         matchModel.setStadium(stadium);
-        matchModel.setDateTime(convertDateTime(matchDto.dateTime()));
-
         matchModel.setResult(returnResult(matchModel));
 
         matchRepository.save(matchModel);
 
-        return matchModel;
+        return MatchMapper.INSTANCE.toMatchResponseDto(matchModel);
     }
 
-    public MatchDto update(UUID id, MatchDto matchDto){
+    public MatchResponseDto update(UUID id, MatchDto matchDto){
         validateMatchGoalsPositive(matchDto);
 
         MatchModel matchModelFound = matchRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Match"));
 
-        if (matchDto.homeClub() != null){
-            ClubModel homeClub = clubRepository.findByName(matchDto.homeClub()).orElseThrow(
-                    () -> new EntityNotFoundException("Club " + matchDto.homeClub()));
+        if (matchDto.getHomeClub() != null){
+            ClubModel homeClub = clubRepository.findByName(matchDto.getHomeClub()).orElseThrow(
+                    () -> new EntityNotFoundException("Club " + matchDto.getHomeClub()));
+            validateMatchClubs(homeClub.getName(), matchModelFound.getVisitingClub().getName());
             matchModelFound.setHomeClub(homeClub);
         }
-        if (matchDto.visitingClub() != null){
-            ClubModel visitingClub = clubRepository.findByName(matchDto.visitingClub()).orElseThrow(
-                    () -> new EntityNotFoundException("Club  " + matchDto.visitingClub()));
+        if (matchDto.getVisitingClub() != null){
+            ClubModel visitingClub = clubRepository.findByName(matchDto.getVisitingClub()).orElseThrow(
+                    () -> new EntityNotFoundException("Club  " + matchDto.getVisitingClub()));
+            validateMatchClubs(matchModelFound.getHomeClub().getName(), visitingClub.getName());
             matchModelFound.setVisitingClub(visitingClub);
         }
-        if (matchDto.homeGoals() != null){
-            matchModelFound.setHomeGoals(matchDto.homeGoals());
+        if (matchDto.getHomeGoals() != null){
+            matchModelFound.setHomeGoals(matchDto.getHomeGoals());
         }
-        if (matchDto.visitingGoals() != null){
-            matchModelFound.setVisitingGoals(matchDto.visitingGoals());
+        if (matchDto.getVisitingGoals() != null){
+            matchModelFound.setVisitingGoals(matchDto.getVisitingGoals());
         }
-        if (matchDto.stadium() != null){
-            StadiumModel stadiumModel = stadiumRepository.findByName(matchDto.stadium()).orElseThrow(
-                    () -> new EntityNotFoundException("Club  " + matchDto.visitingClub()));
+        if (matchDto.getStadium() != null){
+            StadiumModel stadiumModel = stadiumRepository.findByName(matchDto.getStadium()).orElseThrow(
+                    () -> new EntityNotFoundException("Club  " + matchDto.getVisitingClub()));
             matchModelFound.setStadium(stadiumModel);
         }
-        if (matchDto.dateTime() != null){
-            matchModelFound.setDateTime(convertDateTime(matchDto.dateTime()));
+        if (matchDto.getDateTime() != null){
+            matchModelFound.setDateTime(convertDateTime(matchDto.getDateTime()));
         }
 
         matchModelFound.setResult(returnResult(matchModelFound));
 
         matchRepository.save(matchModelFound);
-        return matchMapper.toMatchDto(matchModelFound);
+        return MatchMapper.INSTANCE.toMatchResponseDto(matchModelFound);
     }
 
     public String delete(UUID id){
@@ -220,21 +218,28 @@ public class MatchService {
         }
     }
 
-    public void validateMatchSameClub(ClubModel clubModel){
+    public void validateMatchSameClubInDays(ClubModel clubModel,LocalDateTime dateTime){
         List<MatchModel> matchModels = matchRepository.findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(clubModel.getName(), clubModel.getName());
         if (!matchModels.isEmpty()){
-            MatchModel firstMatch = matchModels.get(0);
-            for (int i = 1; i < matchModels.size(); i++) {
-                long durationDiff = Duration.between(firstMatch.getDateTime(), matchModels.get(i).getDateTime()).toDays();
-                if (durationDiff <=2 ){
+            for (MatchModel match : matchModels) {
+                long durationDiff = Math.abs(Duration.between(match.getDateTime(), dateTime).toDays());
+                if (durationDiff <= 2) {
                     throw new InvalidMatchTimeException("Invalid date and time. The club '" + clubModel.getName() + "' played less than 2 days ago.");
                 }
-                firstMatch = matchModels.get(i);
             }
         }
     }
 
     public void validateMatchGoalsPositive(MatchDto matchDto){
-        if (matchDto.homeGoals() < 0 || matchDto.visitingGoals() < 0 )  throw new IllegalArgumentException("goals must be greater than or equal to zero");
+        if (matchDto.getHomeGoals() != null && matchDto.getHomeGoals() < 0) {
+            throw new IllegalArgumentException("Invalid goals. goals must be greater than or equal to zero");
+        }
+        if (matchDto.getVisitingGoals() != null && matchDto.getVisitingGoals() < 0) {
+            throw new IllegalArgumentException("Invalid goals. goals must be greater than or equal to zero");
+        }
+    }
+
+    public void validateMatchClubs(String homeClub, String visitingClub){
+        if (homeClub.equalsIgnoreCase(visitingClub)) throw new IllegalArgumentException("Invalid clubs. the home club cannot be the same as the visiting club");
     }
 }

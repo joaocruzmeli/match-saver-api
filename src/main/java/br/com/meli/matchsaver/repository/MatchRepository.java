@@ -1,10 +1,7 @@
 package br.com.meli.matchsaver.repository;
 
-import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.MatchModel;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;

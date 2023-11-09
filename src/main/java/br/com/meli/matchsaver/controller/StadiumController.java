@@ -1,6 +1,5 @@
 package br.com.meli.matchsaver.controller;
 
-import br.com.meli.matchsaver.model.StadiumModel;
 import br.com.meli.matchsaver.model.dto.StadiumDto;
 import br.com.meli.matchsaver.service.StadiumService;
 import jakarta.validation.Valid;
@@ -30,8 +29,8 @@ public class StadiumController {
     }
 
     @PostMapping
-    ResponseEntity<StadiumModel> save(@Valid @RequestBody StadiumDto stadiumDto){
-        StadiumModel newStadium = stadiumService.save(stadiumDto);
+    ResponseEntity<StadiumDto> save(@Valid @RequestBody StadiumDto stadiumDto){
+        StadiumDto newStadium = stadiumService.save(stadiumDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(newStadium);
     }
 
