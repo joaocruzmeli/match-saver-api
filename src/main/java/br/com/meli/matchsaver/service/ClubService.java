@@ -29,7 +29,7 @@ public class ClubService {
 
     public ClubDto getById(UUID id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("Club"));
+                () -> new EntityNotFoundException("Club not found"));
         return ClubMapper.INSTANCE.toClubDTO(clubModelFound);
     }
 
@@ -41,7 +41,7 @@ public class ClubService {
 
     public ClubDto update(UUID id, ClubDto clubDto){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("Club"));
+                () -> new EntityNotFoundException("Club not found"));
         if (clubDto.getName() != null){
             clubModelFound.setName(clubDto.getName());
         }
@@ -51,7 +51,7 @@ public class ClubService {
 
     public String delete(UUID id){
         ClubModel clubModelFound = clubRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("Club"));
+                () -> new EntityNotFoundException("Club not found"));
         clubRepository.delete(clubModelFound);
         return "Club deleted successfully.";
     }
