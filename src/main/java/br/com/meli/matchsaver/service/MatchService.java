@@ -137,6 +137,7 @@ public class MatchService {
         return MatchMapper.INSTANCE.toMatchResponseDto(matchModel);
     }
 
+    // TODO REFATORAR ESSE MÉTODO
     public MatchResponseDto update(UUID id, MatchDto matchDto){
         validateMatchGoalsPositive(matchDto);
 
@@ -164,9 +165,19 @@ public class MatchService {
         if (matchDto.getStadium() != null){
             StadiumModel stadiumModel = stadiumRepository.findByName(matchDto.getStadium()).orElseThrow(
                     () -> new EntityNotFoundException("Club  " + matchDto.getVisitingClub()));
+            if (matchDto.getDateTime() != null){
+                validateMatchStadium(matchDto.getStadium(), convertDateTime(matchDto.getDateTime()));
+            } else {
+                validateMatchStadium(matchDto.getStadium(), matchModelFound.getDateTime());
+            }
             matchModelFound.setStadium(stadiumModel);
         }
         if (matchDto.getDateTime() != null){
+            if (matchDto.getStadium() != null){
+                validateMatchStadium(matchDto.getStadium(), convertDateTime(matchDto.getDateTime()));
+            } else {
+                validateMatchStadium(matchModelFound.getStadium().getName(), convertDateTime(matchDto.getDateTime()));
+            }
             matchModelFound.setDateTime(convertDateTime(matchDto.getDateTime()));
         }
 
