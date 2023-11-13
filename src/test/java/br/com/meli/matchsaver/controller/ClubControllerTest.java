@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -149,22 +150,70 @@ public class ClubControllerTest {
     }
 
     //TODO CORRIGIR ESSE MÉTODO
-//    @Test
-//    @DisplayName("Save club with blank name Test")
-//    public void saveClubWithBlankNameTest() throws Exception {
-//        ClubDto invalidClubDto = new ClubDto("");
-//
-//        when(clubService.save(Mockito.any(invalidClubDto.getClass()))).thenThrow(new RuntimeException(new MethodArgumentNotValidException(null, null)));
-//
-//        String requestJson = objectMapper.writeValueAsString(homeClubDto);
-//
-//        mockMvc.perform(post("/clubs")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(requestJson))
-//                .andExpect(status().isBadRequest())
-//                .andDo(print());
-//
-//        verify(clubService, times(1)).save(Mockito.any(ClubDto.class));
-//    }
+    @Test
+    @DisplayName("Save club with blank name Test")
+    public void saveClubWithBlankNameTest() throws Exception {
+        ClubDto invalidClubDto = new ClubDto("");
+
+        doThrow(new RuntimeException(new Exception())).when(clubService).save(invalidClubDto);
+
+        String requestJson = objectMapper.writeValueAsString(invalidClubDto);
+
+        mockMvc.perform(post("/clubs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+
+        verify(clubService, times(1)).save(invalidClubDto);
+    }
+
+    @Test
+    @DisplayName("Update club Test")
+    public void updateClubTest() throws Exception {
+        UUID idClub = UUID.randomUUID();
+
+        ClubDto updatedClub = new ClubDto("vasco");
+
+        when(clubService.update(Mockito.any(idClub.getClass()), Mockito.any(updatedClub.getClass()))).thenReturn(updatedClub);
+
+        String requestJson = objectMapper.writeValueAsString(updatedClub);
+        String responseJson = objectMapper.writeValueAsString(updatedClub);
+
+        mockMvc.perform(put("/clubs/{id}", idClub)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andExpect(content().json(responseJson))
+                .andDo(print());
+
+        verify(clubService, times(1)).update(Mockito.any(idClub.getClass()), Mockito.any(updatedClub.getClass()));
+    }
+
+    @Test
+    @DisplayName("Delete club Test")
+    public void deleteClubTest() throws Exception{
+        UUID idClub = UUID.randomUUID();
+
+        when(clubService.delete(idClub)).thenReturn("Club deleted successfully.");
+
+        mockMvc.perform(delete("/clubs/{id}", UUID.randomUUID()))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        Mockito.verify(clubService, times(1)).delete(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("Delete Not Found Club")
+    public void deleteNotFoundClub() throws Exception{
+        UUID idClub = UUID.randomUUID();
+
+        when(clubService.delete(idClub)).thenThrow(new EntityNotFoundException("Club not found"));
+
+        mockMvc.perform(delete("/clubs/{id}", idClub))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
 
 }

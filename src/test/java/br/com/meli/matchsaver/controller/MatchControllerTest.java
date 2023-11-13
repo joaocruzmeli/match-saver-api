@@ -115,4 +115,69 @@ public class MatchControllerTest {
         verify(matchService, times(1)).getById(idMatchResponse);
     }
 
+    @Test
+    @DisplayName("Get All Trashes Matchs Test")
+    public void getAllTrashesTest() throws Exception {
+        MatchResponseDto matchTrashDto = new MatchResponseDto(UUID.randomUUID(), homeClubDto, visitingClubDto, stadiumDto,
+                "20/10/2023 15:40", 3, 0, Result.HOME_CLUB_WIN );
+
+        List<MatchResponseDto> expectedMatchesList = Arrays.asList(matchTrashDto);
+
+        when(matchService.getAllTrashes()).thenReturn(expectedMatchesList);
+
+        String responseJson = objectMapper.writeValueAsString(expectedMatchesList);
+
+        mockMvc.perform(get("/matches/trashes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(responseJson))
+                .andDo(print());
+
+        verify(matchService, times(1)).getAllTrashes();
+    }
+
+    @Test
+    @DisplayName("Get All Goalless Matches Test")
+    public void getAllGoallessTest() throws Exception {
+        MatchResponseDto matchGoallessDto = new MatchResponseDto(UUID.randomUUID(), homeClubDto, visitingClubDto, stadiumDto,
+                "20/10/2023 15:40", 0, 0, Result.DRAW );
+
+        List<MatchResponseDto> expectedMatchesList = Arrays.asList(matchGoallessDto);
+
+        when(matchService.getAllGoalless()).thenReturn(expectedMatchesList);
+
+        String responseJson = objectMapper.writeValueAsString(expectedMatchesList);
+
+        mockMvc.perform(get("/matches/goalless")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(responseJson))
+                .andDo(print());
+
+        verify(matchService, times(1)).getAllGoalless();
+    }
+
+    @Test
+    @DisplayName("Get All Matches By Stadium Name Test")
+    public void getAllByStadiumNameTest() throws Exception {
+        String stadiumName = matchResponseDto.getStadium().getName();
+
+        List<MatchResponseDto> expectedMatchesList = Arrays.asList(matchResponseDto);
+
+        when(matchService.getAllByStadium(stadiumName)).thenReturn(expectedMatchesList);
+
+        String responseJson = objectMapper.writeValueAsString(expectedMatchesList);
+
+        mockMvc.perform(get("/matches/stadium")
+                        .param("name", stadiumName))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(responseJson))
+                .andDo(print());
+
+        verify(matchService, times(1)).getAllByStadium(stadiumName);
+    }
+
+
+
 }
