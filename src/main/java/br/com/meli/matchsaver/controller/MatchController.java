@@ -2,6 +2,7 @@ package br.com.meli.matchsaver.controller;
 
 import br.com.meli.matchsaver.model.dto.MatchDto;
 import br.com.meli.matchsaver.model.dto.MatchResponseDto;
+import br.com.meli.matchsaver.model.dto.MatchRetrospectDto;
 import br.com.meli.matchsaver.service.MatchService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,16 @@ public class MatchController {
     @GetMapping("/stadium")
     ResponseEntity<List<MatchResponseDto>> getAllByStadium(@RequestParam String name){
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByStadium(name));
+    }
+
+
+
+    @GetMapping("/retrospect/{clubName}")
+    ResponseEntity<MatchRetrospectDto> getRetrospectByClub(
+            @PathVariable String clubName,
+            @RequestParam(required = false, defaultValue = "true") boolean isAllMatches,
+            @RequestParam(required = false, defaultValue = "false") boolean isClubHome){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getRetrospectByClub(clubName, isAllMatches, isClubHome));
     }
 
     @PostMapping
