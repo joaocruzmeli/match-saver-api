@@ -9,9 +9,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MatchRetrospectDto {
+public class RetrospectDto {
 
-    private ClubDto clubDto;
+    private ClubDto club;
     private int totalWins = 0;
     private int totalLoses = 0;
     private int totalDraws = 0;

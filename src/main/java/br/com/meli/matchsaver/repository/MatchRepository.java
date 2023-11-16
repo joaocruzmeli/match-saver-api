@@ -13,4 +13,5 @@ public interface MatchRepository extends JpaRepository<MatchModel, UUID> {
     List<MatchModel> findAllByStadiumNameContainingIgnoreCaseAndDateTime(String stadiumName, LocalDateTime dateTime);
 
     List<MatchModel> findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(String homeClub, String visitingClub);
+    List<MatchModel> findAllByHomeClubNameContainingIgnoreCaseAndVisitingClubNameContainingIgnoreCase(String homeClub, String visitingClub);
 }

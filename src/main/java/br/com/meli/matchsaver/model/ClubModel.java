@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -36,4 +37,17 @@ public class ClubModel implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "visitingClub")
     private List<MatchModel> visitingMatches;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ClubModel clubModel = (ClubModel) o;
+        return Objects.equals(id, clubModel.id) && Objects.equals(name, clubModel.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
 }

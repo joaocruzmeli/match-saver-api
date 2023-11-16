@@ -6,10 +6,9 @@ import br.com.meli.matchsaver.exceptions.InvalidMatchTimeException;
 import br.com.meli.matchsaver.model.ClubModel;
 import br.com.meli.matchsaver.model.MatchModel;
 import br.com.meli.matchsaver.model.StadiumModel;
-import br.com.meli.matchsaver.model.dto.ClubDto;
 import br.com.meli.matchsaver.model.dto.MatchDto;
 import br.com.meli.matchsaver.model.dto.MatchResponseDto;
-import br.com.meli.matchsaver.model.dto.MatchRetrospectDto;
+import br.com.meli.matchsaver.model.dto.RetrospectDto;
 import br.com.meli.matchsaver.repository.ClubRepository;
 import br.com.meli.matchsaver.repository.MatchRepository;
 import br.com.meli.matchsaver.repository.StadiumRepository;
@@ -25,6 +24,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class MatchService {
@@ -107,7 +108,7 @@ public class MatchService {
         return matchStadiums;
     }
 
-    public MatchRetrospectDto getRetrospectByClub(String clubName, boolean isAllMatches, boolean isClubHome) {
+    public RetrospectDto getRetrospectByClub(String clubName, boolean isAllMatches, boolean isClubHome) {
         ClubModel clubModelFound = clubRepository.findByName(clubName).orElseThrow(
                 () -> new EntityNotFoundException("Club " + clubName + " not found"));
         List<MatchModel> matchModels = matchRepository.findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(clubName, clubName);
@@ -130,10 +131,129 @@ public class MatchService {
                 totalDraws += isHomeClub && match.getResult().equals(Result.DRAW) ? 1 : 0;
             }
         }
-        MatchRetrospectDto matchRetrospectDto = new MatchRetrospectDto(
+        RetrospectDto retrospectDto = new RetrospectDto(
                 ClubMapper.INSTANCE.toClubDTO(clubModelFound),
                 totalWins, totalLoses, totalDraws, totalGoalsScored, totalGoalsConceded);
-        return matchRetrospectDto;
+        return retrospectDto;
+    }
+
+    public List<RetrospectDto> getRetrospectByClash(String clubName1, String clubName2, boolean isAllMatches, String clubHome) {
+        ClubModel club1 = clubRepository.findByName(clubName1)
+                .orElseThrow(() -> new EntityNotFoundException("Club " + clubName1 + " not found"));
+
+        ClubModel club2 = clubRepository.findByName(clubName2)
+                .orElseThrow(() -> new EntityNotFoundException("Club " + clubName2 + " not found"));
+
+        List<MatchModel> matchListClub1Home = matchRepository
+                .findAllByHomeClubNameContainingIgnoreCaseAndVisitingClubNameContainingIgnoreCase(clubName1, clubName2);
+        List<MatchModel> matchListClub2Home = matchRepository
+                .findAllByHomeClubNameContainingIgnoreCaseAndVisitingClubNameContainingIgnoreCase(clubName2, clubName1);
+        List<MatchModel> matchModelList = Stream.concat(matchListClub1Home.stream(), matchListClub2Home.stream())
+                .toList();
+
+        int totalWinsClub1 = 0;
+        int totalLosesClub1 = 0;
+        int totalDraws = 0;
+        int totalGoalsScoredClub1 = 0;
+        int totalGoalsConcededClub1 = 0;
+
+        int totalWinsClub2 = 0;
+        int totalLosesClub2 = 0;
+        int totalGoalsScoredClub2 = 0;
+        int totalGoalsConcededClub2 = 0;
+
+        for (MatchModel match : matchModelList) {
+            boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
+            boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
+            boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
+            boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
+
+            if (match.getResult() == Result.HOME_CLUB_WIN) {
+                totalWinsClub1 += isHomeClub1 ? 1 : 0;
+                totalWinsClub2 += isHomeClub2 ? 1 : 0;
+                totalLosesClub1 += isVisitingClub1 ? 1 : 0;
+                totalLosesClub2 += isVisitingClub2 ? 1 : 0;
+            } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
+                totalWinsClub1 += isVisitingClub1 ? 1 : 0;
+                totalWinsClub2 += isVisitingClub2 ? 1 : 0;
+                totalLosesClub1 += isHomeClub1 ? 1 : 0;
+                totalLosesClub2 += isHomeClub2 ? 1 : 0;
+            } else if (match.getResult() == Result.DRAW) {
+                totalDraws += 1;
+            }
+
+            totalGoalsScoredClub1 += isHomeClub1 ? match.getHomeGoals() : match.getVisitingGoals();
+            totalGoalsConcededClub1 += isHomeClub1 ? match.getVisitingGoals() : match.getHomeGoals();
+            totalGoalsScoredClub2 += isHomeClub2 ? match.getHomeGoals() : match.getVisitingGoals();
+            totalGoalsConcededClub2 += isHomeClub2 ? match.getVisitingGoals() : match.getHomeGoals();
+        }
+
+        if (!clubHome.isEmpty() && (clubHome.equalsIgnoreCase(clubName1) || clubHome.equalsIgnoreCase(clubName2))) {
+            ClubModel clubModel = clubRepository.findByName(clubHome)
+                    .orElseThrow(() -> new EntityNotFoundException("Club " + clubHome + " not found"));
+
+            List<MatchModel> matchModels = clubModel.getHomeMatches();
+            List<MatchModel> filteredMatches = matchModels.stream()
+                    .filter(matchModel ->
+                            matchModel.getVisitingClub().getName().equalsIgnoreCase(clubName1) ||
+                                    matchModel.getHomeClub().getName().equalsIgnoreCase(clubName2))
+                    .toList();
+
+            int totalWinsClubHome = 0;
+            int totalLosesClubHome = 0;
+            int totalDrawsClubHome = 0;
+            int totalGoalsScoredClubHome = 0;
+            int totalGoalsConcededClubHome = 0;
+
+            for (MatchModel match : filteredMatches) {
+                boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubHome);
+                boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubHome);
+
+                if (match.getResult() == Result.HOME_CLUB_WIN) {
+                    totalWinsClubHome += isHomeClub1 ? 1 : 0;
+                    totalLosesClubHome += isVisitingClub1 ? 1 : 0;
+                } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
+                    totalWinsClubHome += isVisitingClub1 ? 1 : 0;
+                    totalLosesClubHome += isHomeClub1 ? 1 : 0;
+                } else if (match.getResult() == Result.DRAW) {
+                    totalDrawsClubHome += 1;
+                }
+
+                totalGoalsScoredClubHome += isHomeClub1 ? match.getHomeGoals() : match.getVisitingGoals();
+                totalGoalsConcededClubHome += isHomeClub1 ? match.getVisitingGoals() : match.getHomeGoals();
+            }
+
+            RetrospectDto retrospectDtoHome = new RetrospectDto(
+                    ClubMapper.INSTANCE.toClubDTO(clubModel),
+                    totalWinsClubHome,
+                    totalLosesClubHome,
+                    totalDrawsClubHome,
+                    totalGoalsScoredClubHome,
+                    totalGoalsConcededClubHome);
+
+            return List.of(retrospectDtoHome);
+        }
+
+        RetrospectDto retrospectDto1 = new RetrospectDto(
+                ClubMapper.INSTANCE.toClubDTO(club1),
+                totalWinsClub1,
+                totalLosesClub1,
+                totalDraws,
+                totalGoalsScoredClub1,
+                totalGoalsConcededClub1);
+
+        if (isAllMatches) {
+            RetrospectDto retrospectDto2 = new RetrospectDto(
+                    ClubMapper.INSTANCE.toClubDTO(club2),
+                    totalWinsClub2,
+                    totalLosesClub2,
+                    totalDraws,
+                    totalGoalsScoredClub2,
+                    totalGoalsConcededClub2);
+            return List.of(retrospectDto1, retrospectDto2);
+        }
+
+        return List.of(retrospectDto1);
     }
 
 
