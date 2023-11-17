@@ -72,3 +72,11 @@ Realize buscas específicas, incluindo:
 - Ordene por diferença entre vitórias e derrotas, do maior para o menor.
 - Inclua nome do clube freguês, quantidade total de partidas, vitórias e derrotas do clube X.
 
+
+## 👨‍💻 Autor
+
+Nome: João Cruz<br>Linkedin: https://www.linkedin.com/in/joaosilvacruz/
+
+---
+
+<h4 align=center>Made with 💚 by <a href="https://github.com/joaocruzmeli">João Cruz</a></h4>
