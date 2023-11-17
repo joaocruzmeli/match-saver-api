@@ -151,112 +151,79 @@ public class MatchService {
         List<MatchModel> matchModelList = Stream.concat(matchListClub1Home.stream(), matchListClub2Home.stream())
                 .toList();
 
-        int totalWinsClub1 = 0;
-        int totalLosesClub1 = 0;
-        int totalDraws = 0;
-        int totalGoalsScoredClub1 = 0;
-        int totalGoalsConcededClub1 = 0;
+        RetrospectDto retrospect1 = new RetrospectDto();
+        RetrospectDto retrospect2 = new RetrospectDto();
+        retrospect1.setClub(ClubMapper.INSTANCE.toClubDTO(club1));
+        retrospect2.setClub(ClubMapper.INSTANCE.toClubDTO(club2));
 
-        int totalWinsClub2 = 0;
-        int totalLosesClub2 = 0;
-        int totalGoalsScoredClub2 = 0;
-        int totalGoalsConcededClub2 = 0;
+        if (isAllMatches){
+            for (MatchModel match : matchModelList) {
+                boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
+                boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
+                boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
+                boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
 
-        for (MatchModel match : matchModelList) {
-            boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
-            boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
-            boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
-            boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
+                if (match.getResult() == Result.HOME_CLUB_WIN) {
+                    retrospect1.setTotalWins(isHomeClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
+                    retrospect1.setTotalLoses(isVisitingClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
+                    retrospect2.setTotalWins(isHomeClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
+                    retrospect2.setTotalLoses(isVisitingClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
+                } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
+                    retrospect1.setTotalWins(isVisitingClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
+                    retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
+                    retrospect2.setTotalWins(isVisitingClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
+                    retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
+                } else if (match.getResult() == Result.DRAW) {
+                    retrospect1.setTotalDraws(retrospect1.getTotalDraws() + 1);
+                    retrospect2.setTotalDraws(retrospect2.getTotalDraws() + 1);
+                }
 
-            if (match.getResult() == Result.HOME_CLUB_WIN) {
-                totalWinsClub1 += isHomeClub1 ? 1 : 0;
-                totalWinsClub2 += isHomeClub2 ? 1 : 0;
-                totalLosesClub1 += isVisitingClub1 ? 1 : 0;
-                totalLosesClub2 += isVisitingClub2 ? 1 : 0;
-            } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
-                totalWinsClub1 += isVisitingClub1 ? 1 : 0;
-                totalWinsClub2 += isVisitingClub2 ? 1 : 0;
-                totalLosesClub1 += isHomeClub1 ? 1 : 0;
-                totalLosesClub2 += isHomeClub2 ? 1 : 0;
-            } else if (match.getResult() == Result.DRAW) {
-                totalDraws += 1;
+                retrospect1.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getHomeGoals() : retrospect1.getGoalsScored() + match.getVisitingGoals());
+                retrospect1.setGoalsConceded(isHomeClub1 ? retrospect1.getGoalsConceded() + match.getVisitingGoals() : retrospect1.getGoalsConceded() + match.getHomeGoals());
+                retrospect2.setGoalsScored(isHomeClub2 ? retrospect2.getGoalsScored() + match.getHomeGoals() : retrospect2.getGoalsScored() +  match.getVisitingGoals());
+                retrospect2.setGoalsConceded(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getVisitingGoals() : retrospect2.getGoalsConceded() + match.getHomeGoals());
             }
-
-            totalGoalsScoredClub1 += isHomeClub1 ? match.getHomeGoals() : match.getVisitingGoals();
-            totalGoalsConcededClub1 += isHomeClub1 ? match.getVisitingGoals() : match.getHomeGoals();
-            totalGoalsScoredClub2 += isHomeClub2 ? match.getHomeGoals() : match.getVisitingGoals();
-            totalGoalsConcededClub2 += isHomeClub2 ? match.getVisitingGoals() : match.getHomeGoals();
         }
 
         if (!clubHome.isEmpty() && (clubHome.equalsIgnoreCase(clubName1) || clubHome.equalsIgnoreCase(clubName2))) {
-            ClubModel clubModel = clubRepository.findByName(clubHome)
+            ClubModel club3 = clubRepository.findByName(clubHome)
                     .orElseThrow(() -> new EntityNotFoundException("Club " + clubHome + " not found"));
-
-            List<MatchModel> matchModels = clubModel.getHomeMatches();
-            List<MatchModel> filteredMatches = matchModels.stream()
-                    .filter(matchModel ->
-                            matchModel.getVisitingClub().getName().equalsIgnoreCase(clubName1) ||
-                                    matchModel.getHomeClub().getName().equalsIgnoreCase(clubName2))
+            List<MatchModel> matchClubHomeFiltered = club3.getHomeMatches();
+            List<MatchModel> matchModels = matchModelList.stream()
+                    .filter(matchClubHomeFiltered::contains)
                     .toList();
 
-            int totalWinsClubHome = 0;
-            int totalLosesClubHome = 0;
-            int totalDrawsClubHome = 0;
-            int totalGoalsScoredClubHome = 0;
-            int totalGoalsConcededClubHome = 0;
-
-            for (MatchModel match : filteredMatches) {
-                boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubHome);
-                boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubHome);
+            for (MatchModel match : matchModelList) {
+                boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
+                boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
+                boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
+                boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
 
                 if (match.getResult() == Result.HOME_CLUB_WIN) {
-                    totalWinsClubHome += isHomeClub1 ? 1 : 0;
-                    totalLosesClubHome += isVisitingClub1 ? 1 : 0;
+                    retrospect1.setTotalWins(isHomeClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
+                    retrospect2.setTotalWins(isHomeClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
+                    retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
+                    retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
                 } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
-                    totalWinsClubHome += isVisitingClub1 ? 1 : 0;
-                    totalLosesClubHome += isHomeClub1 ? 1 : 0;
+                    retrospect1.setTotalWins(isVisitingClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
+                    retrospect2.setTotalWins(isVisitingClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
+                    retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect2.getTotalLoses());
+                    retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
                 } else if (match.getResult() == Result.DRAW) {
-                    totalDrawsClubHome += 1;
+                    retrospect1.setTotalDraws(retrospect1.getTotalDraws() + 1);
+                    retrospect2.setTotalDraws(retrospect2.getTotalDraws() + 1);
                 }
 
-                totalGoalsScoredClubHome += isHomeClub1 ? match.getHomeGoals() : match.getVisitingGoals();
-                totalGoalsConcededClubHome += isHomeClub1 ? match.getVisitingGoals() : match.getHomeGoals();
+                retrospect1.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getHomeGoals() : retrospect1.getGoalsScored() + match.getVisitingGoals());
+                retrospect2.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getVisitingGoals() : retrospect1.getGoalsScored() +  match.getHomeGoals());
+                retrospect1.setGoalsScored(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getHomeGoals() : retrospect2.getGoalsConceded() + match.getVisitingGoals());
+                retrospect2.setGoalsConceded(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getVisitingGoals() : retrospect2.getGoalsConceded() + match.getHomeGoals());
             }
-
-            RetrospectDto retrospectDtoHome = new RetrospectDto(
-                    ClubMapper.INSTANCE.toClubDTO(clubModel),
-                    totalWinsClubHome,
-                    totalLosesClubHome,
-                    totalDrawsClubHome,
-                    totalGoalsScoredClubHome,
-                    totalGoalsConcededClubHome);
-
-            return List.of(retrospectDtoHome);
         }
 
-        RetrospectDto retrospectDto1 = new RetrospectDto(
-                ClubMapper.INSTANCE.toClubDTO(club1),
-                totalWinsClub1,
-                totalLosesClub1,
-                totalDraws,
-                totalGoalsScoredClub1,
-                totalGoalsConcededClub1);
 
-        if (isAllMatches) {
-            RetrospectDto retrospectDto2 = new RetrospectDto(
-                    ClubMapper.INSTANCE.toClubDTO(club2),
-                    totalWinsClub2,
-                    totalLosesClub2,
-                    totalDraws,
-                    totalGoalsScoredClub2,
-                    totalGoalsConcededClub2);
-            return List.of(retrospectDto1, retrospectDto2);
-        }
-
-        return List.of(retrospectDto1);
+        return List.of(retrospect1, retrospect2);
     }
-
-
 
     public MatchResponseDto save(MatchDto matchDto) {
 
