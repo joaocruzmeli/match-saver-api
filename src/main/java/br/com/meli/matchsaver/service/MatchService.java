@@ -9,6 +9,7 @@ import br.com.meli.matchsaver.model.StadiumModel;
 import br.com.meli.matchsaver.model.dto.MatchDto;
 import br.com.meli.matchsaver.model.dto.MatchResponseDto;
 import br.com.meli.matchsaver.model.dto.RetrospectDto;
+import br.com.meli.matchsaver.model.dto.RetrospectPushoverDto;
 import br.com.meli.matchsaver.repository.ClubRepository;
 import br.com.meli.matchsaver.repository.MatchRepository;
 import br.com.meli.matchsaver.repository.StadiumRepository;
@@ -21,9 +22,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.logging.Filter;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,18 +79,20 @@ public class MatchService {
         return matchGoalless;
     }
 
-    public List<MatchResponseDto> getAllByClubName(String name, boolean isClubHome) {
-        ClubModel clubModelFound = clubRepository.findByName(name).orElseThrow(
-                () -> new EntityNotFoundException("Club " + name));
-        List<MatchModel> matchModels = matchRepository.findAll();
+    public List<MatchResponseDto> getAllByClubName(String name, boolean isClubHome, boolean isClubVisiting) {
+
+        ClubModel clubModelFound = findClubByName(name);
+
+        List<MatchModel> matchModels = matchRepository.findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(name, name);
         List<MatchResponseDto> matchClubs = new ArrayList<>();
         for (MatchModel match : matchModels) {
             boolean isHomeClub = match.getHomeClub().getName().equalsIgnoreCase(clubModelFound.getName());
             boolean isVisitingClub = match.getVisitingClub().getName().equalsIgnoreCase(clubModelFound.getName());
 
-            if ((isHomeClub && isClubHome) || (!isClubHome && isVisitingClub)) {
+            if ((isHomeClub && isClubHome) || (isClubVisiting && isVisitingClub) || (!isClubVisiting && !isClubHome)) {
                 matchClubs.add(MatchMapper.INSTANCE.toMatchResponseDto(match));
             }
+
         }
         return matchClubs;
     }
@@ -109,8 +111,7 @@ public class MatchService {
     }
 
     public RetrospectDto getRetrospectByClub(String clubName, boolean isAllMatches, boolean isClubHome) {
-        ClubModel clubModelFound = clubRepository.findByName(clubName).orElseThrow(
-                () -> new EntityNotFoundException("Club " + clubName + " not found"));
+        ClubModel clubModelFound = findClubByName(clubName);
         List<MatchModel> matchModels = matchRepository.findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(clubName, clubName);
 
         int totalWins = 0;
@@ -123,7 +124,7 @@ public class MatchService {
             boolean isHomeClub = match.getHomeClub().getName().equalsIgnoreCase(clubName);
             boolean isVisitingClub = match.getVisitingClub().getName().equalsIgnoreCase(clubName);
 
-            if (isAllMatches || isClubHome && isHomeClub || isVisitingClub && !isHomeClub){
+            if (isAllMatches || isClubHome && isHomeClub || isVisitingClub && !isHomeClub) {
                 totalGoalsScored += isHomeClub ? match.getHomeGoals() : match.getVisitingGoals();
                 totalGoalsConceded += isHomeClub ? match.getVisitingGoals() : match.getHomeGoals();
                 totalWins += isHomeClub && match.getResult().equals(Result.HOME_CLUB_WIN) ? 1 : 0;
@@ -137,18 +138,17 @@ public class MatchService {
         return retrospectDto;
     }
 
-    public List<RetrospectDto> getRetrospectByClash(String clubName1, String clubName2, boolean isAllMatches, String clubHome) {
-        ClubModel club1 = clubRepository.findByName(clubName1)
-                .orElseThrow(() -> new EntityNotFoundException("Club " + clubName1 + " not found"));
-
-        ClubModel club2 = clubRepository.findByName(clubName2)
-                .orElseThrow(() -> new EntityNotFoundException("Club " + clubName2 + " not found"));
+    public List<RetrospectDto> getRetrospectByClash(String clubName1, String clubName2, String clubHome) {
+        ClubModel club1 = findClubByName(clubName1);
+        ClubModel club2 = findClubByName(clubName2);
 
         List<MatchModel> matchListClub1Home = matchRepository
                 .findAllByHomeClubNameContainingIgnoreCaseAndVisitingClubNameContainingIgnoreCase(clubName1, clubName2);
+
         List<MatchModel> matchListClub2Home = matchRepository
                 .findAllByHomeClubNameContainingIgnoreCaseAndVisitingClubNameContainingIgnoreCase(clubName2, clubName1);
-        List<MatchModel> matchModelList = Stream.concat(matchListClub1Home.stream(), matchListClub2Home.stream())
+
+        List<MatchModel> matchesFoundList = Stream.concat(matchListClub1Home.stream(), matchListClub2Home.stream())
                 .toList();
 
         RetrospectDto retrospect1 = new RetrospectDto();
@@ -156,82 +156,85 @@ public class MatchService {
         retrospect1.setClub(ClubMapper.INSTANCE.toClubDTO(club1));
         retrospect2.setClub(ClubMapper.INSTANCE.toClubDTO(club2));
 
-        if (isAllMatches){
-            for (MatchModel match : matchModelList) {
-                boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
-                boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
-                boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
-                boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
-
-                if (match.getResult() == Result.HOME_CLUB_WIN) {
-                    retrospect1.setTotalWins(isHomeClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
-                    retrospect1.setTotalLoses(isVisitingClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
-                    retrospect2.setTotalWins(isHomeClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
-                    retrospect2.setTotalLoses(isVisitingClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
-                } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
-                    retrospect1.setTotalWins(isVisitingClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
-                    retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
-                    retrospect2.setTotalWins(isVisitingClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
-                    retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
-                } else if (match.getResult() == Result.DRAW) {
-                    retrospect1.setTotalDraws(retrospect1.getTotalDraws() + 1);
-                    retrospect2.setTotalDraws(retrospect2.getTotalDraws() + 1);
-                }
-
-                retrospect1.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getHomeGoals() : retrospect1.getGoalsScored() + match.getVisitingGoals());
-                retrospect1.setGoalsConceded(isHomeClub1 ? retrospect1.getGoalsConceded() + match.getVisitingGoals() : retrospect1.getGoalsConceded() + match.getHomeGoals());
-                retrospect2.setGoalsScored(isHomeClub2 ? retrospect2.getGoalsScored() + match.getHomeGoals() : retrospect2.getGoalsScored() +  match.getVisitingGoals());
-                retrospect2.setGoalsConceded(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getVisitingGoals() : retrospect2.getGoalsConceded() + match.getHomeGoals());
-            }
+        if (!clubHome.isEmpty()) {
+            ClubModel clubModel = findClubByName(clubHome);
+            matchesFoundList = matchesFoundList.stream().filter(matchModel -> matchModel.getHomeClub().equals(clubModel)).toList();
         }
+        for (MatchModel match : matchesFoundList) {
+            boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
+            boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
+            boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
+            boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
 
-        if (!clubHome.isEmpty() && (clubHome.equalsIgnoreCase(clubName1) || clubHome.equalsIgnoreCase(clubName2))) {
-            ClubModel club3 = clubRepository.findByName(clubHome)
-                    .orElseThrow(() -> new EntityNotFoundException("Club " + clubHome + " not found"));
-            List<MatchModel> matchClubHomeFiltered = club3.getHomeMatches();
-            List<MatchModel> matchModels = matchModelList.stream()
-                    .filter(matchClubHomeFiltered::contains)
-                    .toList();
-
-            for (MatchModel match : matchModelList) {
-                boolean isHomeClub1 = match.getHomeClub().getName().equalsIgnoreCase(clubName1);
-                boolean isVisitingClub1 = match.getVisitingClub().getName().equalsIgnoreCase(clubName1);
-                boolean isHomeClub2 = match.getHomeClub().getName().equalsIgnoreCase(clubName2);
-                boolean isVisitingClub2 = match.getVisitingClub().getName().equalsIgnoreCase(clubName2);
-
-                if (match.getResult() == Result.HOME_CLUB_WIN) {
-                    retrospect1.setTotalWins(isHomeClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
-                    retrospect2.setTotalWins(isHomeClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
-                    retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
-                    retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
-                } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
-                    retrospect1.setTotalWins(isVisitingClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
-                    retrospect2.setTotalWins(isVisitingClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
-                    retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect2.getTotalLoses());
-                    retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
-                } else if (match.getResult() == Result.DRAW) {
-                    retrospect1.setTotalDraws(retrospect1.getTotalDraws() + 1);
-                    retrospect2.setTotalDraws(retrospect2.getTotalDraws() + 1);
-                }
-
-                retrospect1.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getHomeGoals() : retrospect1.getGoalsScored() + match.getVisitingGoals());
-                retrospect2.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getVisitingGoals() : retrospect1.getGoalsScored() +  match.getHomeGoals());
-                retrospect1.setGoalsScored(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getHomeGoals() : retrospect2.getGoalsConceded() + match.getVisitingGoals());
-                retrospect2.setGoalsConceded(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getVisitingGoals() : retrospect2.getGoalsConceded() + match.getHomeGoals());
+            if (match.getResult() == Result.HOME_CLUB_WIN) {
+                retrospect1.setTotalWins(isHomeClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
+                retrospect1.setTotalLoses(isVisitingClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
+                retrospect2.setTotalWins(isHomeClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
+                retrospect2.setTotalLoses(isVisitingClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
+            } else if (match.getResult() == Result.VISITING_CLUB_WIN) {
+                retrospect1.setTotalWins(isVisitingClub1 ? retrospect1.getTotalWins() + 1 : retrospect1.getTotalWins());
+                retrospect1.setTotalLoses(isHomeClub1 ? retrospect1.getTotalLoses() + 1 : retrospect1.getTotalLoses());
+                retrospect2.setTotalWins(isVisitingClub2 ? retrospect2.getTotalWins() + 1 : retrospect2.getTotalWins());
+                retrospect2.setTotalLoses(isHomeClub2 ? retrospect2.getTotalLoses() + 1 : retrospect2.getTotalLoses());
+            } else if (match.getResult() == Result.DRAW) {
+                retrospect1.setTotalDraws(retrospect1.getTotalDraws() + 1);
+                retrospect2.setTotalDraws(retrospect2.getTotalDraws() + 1);
             }
-        }
 
+            retrospect1.setGoalsScored(isHomeClub1 ? retrospect1.getGoalsScored() + match.getHomeGoals() : retrospect1.getGoalsScored() + match.getVisitingGoals());
+            retrospect1.setGoalsConceded(isHomeClub1 ? retrospect1.getGoalsConceded() + match.getVisitingGoals() : retrospect1.getGoalsConceded() + match.getHomeGoals());
+            retrospect2.setGoalsScored(isHomeClub2 ? retrospect2.getGoalsScored() + match.getHomeGoals() : retrospect2.getGoalsScored() + match.getVisitingGoals());
+            retrospect2.setGoalsConceded(isHomeClub2 ? retrospect2.getGoalsConceded() + match.getVisitingGoals() : retrospect2.getGoalsConceded() + match.getHomeGoals());
+        }
 
         return List.of(retrospect1, retrospect2);
     }
 
+    public List<RetrospectPushoverDto> getAllPushovers(String clubName) {
+        ClubModel club = findClubByName(clubName);
+
+        List<MatchModel> matchModels = matchRepository.findAllByHomeClubNameContainingIgnoreCaseOrVisitingClubNameContainingIgnoreCase(clubName, clubName);
+
+        HashMap<ClubModel, RetrospectPushoverDto> matchPushoverFiltered = new HashMap<>();
+
+        for (MatchModel match : matchModels) {
+            ClubModel homeClub = match.getHomeClub();
+            ClubModel visitingClub = match.getVisitingClub();
+            String typeClub = match.getHomeClub().equals(club) ? "home" : "visiting";
+            ClubModel clubKey = typeClub.equals("home") ? visitingClub : homeClub;
+
+            if (matchPushoverFiltered.containsKey(clubKey)) {
+                RetrospectPushoverDto retrospectExist = matchPushoverFiltered.get(clubKey);
+                retrospectExist.setTotalMatches(retrospectExist.getTotalMatches() + 1);
+                retrospectExist.setTotalWins(match.getResult().equals(Result.HOME_CLUB_WIN) && typeClub.equals("home") ? retrospectExist.getTotalWins() + 1 : retrospectExist.getTotalWins());
+                retrospectExist.setTotalWins(match.getResult().equals(Result.VISITING_CLUB_WIN) && typeClub.equals("visiting") ? retrospectExist.getTotalWins() + 1 : retrospectExist.getTotalWins());
+                retrospectExist.setTotalLoses(match.getResult().equals(Result.VISITING_CLUB_WIN) && typeClub.equals("home") ? retrospectExist.getTotalLoses() + 1 : retrospectExist.getTotalLoses());
+                retrospectExist.setTotalLoses(match.getResult().equals(Result.HOME_CLUB_WIN) && typeClub.equals("visiting") ? retrospectExist.getTotalLoses() + 1 : retrospectExist.getTotalLoses());
+            } else {
+                RetrospectPushoverDto retrospect = new RetrospectPushoverDto();
+                retrospect.setClubPushover(ClubMapper.INSTANCE.toClubDTO(clubKey));
+                retrospect.setTotalMatches(1);
+                retrospect.setTotalWins(match.getResult().equals(Result.HOME_CLUB_WIN) && typeClub.equals("home") ? 1 : 0);
+                retrospect.setTotalLoses(match.getResult().equals(Result.VISITING_CLUB_WIN) && typeClub.equals("home") ? 1 : 0);
+                matchPushoverFiltered.put(clubKey, retrospect);
+            }
+        }
+
+        List<RetrospectPushoverDto> pushoverSortedList = new ArrayList<>(matchPushoverFiltered.values()
+                .stream()
+                .sorted(Comparator.comparingInt(o -> o.getTotalWins() - o.getTotalLoses())).toList());
+        Collections.reverse(pushoverSortedList);
+
+        pushoverSortedList = pushoverSortedList.subList(0, Math.min(pushoverSortedList.size(), 5));
+
+        return pushoverSortedList;
+    }
+
     public MatchResponseDto save(MatchDto matchDto) {
 
-        ClubModel homeClubModel = clubRepository.findByName(matchDto.getHomeClub()).orElseThrow(
-                () -> new EntityNotFoundException("Club " + matchDto.getHomeClub()));
+        ClubModel homeClubModel = findClubByName(matchDto.getHomeClub());
 
-        ClubModel visitingClubModel = clubRepository.findByName(matchDto.getVisitingClub()).orElseThrow(
-                () -> new EntityNotFoundException("Club " + matchDto.getVisitingClub()));
+        ClubModel visitingClubModel = findClubByName(matchDto.getVisitingClub());
 
         StadiumModel stadium = stadiumRepository.findByName(matchDto.getStadium()).orElseThrow(
                 () -> new EntityNotFoundException("Stadium " + matchDto.getStadium()));
@@ -243,7 +246,6 @@ public class MatchService {
         validateMatchSameClubInDays(visitingClubModel, convertDateTime(matchDto.getDateTime()));
         validateMatchClubs(matchDto.getHomeClub(), matchDto.getVisitingClub());
 
-        //TODO Estudar como melhorar esse mapper
         MatchModel matchModel = MatchMapper.INSTANCE.toMatchModel(matchDto);
         matchModel.setDateTime(convertDateTime(matchDto.getDateTime()));
         matchModel.setVisitingClub(visitingClubModel);
@@ -256,7 +258,6 @@ public class MatchService {
         return MatchMapper.INSTANCE.toMatchResponseDto(matchModel);
     }
 
-    // TODO REFATORAR ESSE MÉTODO
     public MatchResponseDto update(UUID id, MatchDto matchDto) {
         validateMatchGoalsPositive(matchDto);
 
@@ -264,14 +265,12 @@ public class MatchService {
                 () -> new EntityNotFoundException("Match"));
 
         if (matchDto.getHomeClub() != null) {
-            ClubModel homeClub = clubRepository.findByName(matchDto.getHomeClub()).orElseThrow(
-                    () -> new EntityNotFoundException("Club " + matchDto.getHomeClub()));
+            ClubModel homeClub = findClubByName(matchDto.getHomeClub());
             validateMatchClubs(homeClub.getName(), matchModelFound.getVisitingClub().getName());
             matchModelFound.setHomeClub(homeClub);
         }
         if (matchDto.getVisitingClub() != null) {
-            ClubModel visitingClub = clubRepository.findByName(matchDto.getVisitingClub()).orElseThrow(
-                    () -> new EntityNotFoundException("Club  " + matchDto.getVisitingClub()));
+            ClubModel visitingClub = findClubByName(matchDto.getVisitingClub());
             validateMatchClubs(matchModelFound.getHomeClub().getName(), visitingClub.getName());
             matchModelFound.setVisitingClub(visitingClub);
         }
@@ -311,6 +310,11 @@ public class MatchService {
                 () -> new EntityNotFoundException("Match"));
         matchRepository.delete(matchFound);
         return "Match deleted successfully.";
+    }
+
+    private ClubModel findClubByName(String clubName) {
+        return clubRepository.findByName(clubName)
+                .orElseThrow(() -> new EntityNotFoundException("Club " + clubName + " not found"));
     }
 
     public Result returnResult(MatchModel matchModel) {

@@ -3,6 +3,7 @@ package br.com.meli.matchsaver.controller;
 import br.com.meli.matchsaver.model.dto.MatchDto;
 import br.com.meli.matchsaver.model.dto.MatchResponseDto;
 import br.com.meli.matchsaver.model.dto.RetrospectDto;
+import br.com.meli.matchsaver.model.dto.RetrospectPushoverDto;
 import br.com.meli.matchsaver.service.MatchService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,11 @@ public class MatchController {
     }
 
     @GetMapping("/club")
-    ResponseEntity<List<MatchResponseDto>> getAllByClubName(@RequestParam String name, @RequestParam boolean isClubHome){
-        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByClubName(name, isClubHome));
+    ResponseEntity<List<MatchResponseDto>> getAllByClubName(
+            @RequestParam String name,
+            @RequestParam(required = false, defaultValue = "false") boolean isClubHome,
+            @RequestParam(required = false, defaultValue = "false") boolean isClubVisiting){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByClubName(name, isClubHome, isClubVisiting));
     }
 
     @GetMapping("/stadium")
@@ -49,10 +53,8 @@ public class MatchController {
         return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllByStadium(name));
     }
 
-
-
     @GetMapping("/retrospect/{clubName}")
-    ResponseEntity<RetrospectDto> getRetrospectByClub(
+    ResponseEntity<RetrospectDto> getRetrospectByClubName(
             @PathVariable String clubName,
             @RequestParam(required = false, defaultValue = "true") boolean isAllMatches,
             @RequestParam(required = false, defaultValue = "false") boolean isClubHome){
@@ -60,12 +62,17 @@ public class MatchController {
     }
 
     @GetMapping("/retrospect")
-    ResponseEntity<List<RetrospectDto>> getRetrospectByClub(
+    ResponseEntity<List<RetrospectDto>> getRetrospectByClash(
             @RequestParam String club1,
             @RequestParam String club2,
-            @RequestParam(required = false, defaultValue = "true") boolean isAllMatches,
             @RequestParam(required = false, defaultValue = "") String clubHome){
-        return ResponseEntity.status(HttpStatus.OK).body(matchService.getRetrospectByClash(club1, club2, isAllMatches, clubHome));
+            return ResponseEntity.status(HttpStatus.OK).body(matchService.getRetrospectByClash(club1, club2, clubHome));
+    }
+
+    @GetMapping("/retrospect/pushover")
+    ResponseEntity<List<RetrospectPushoverDto>> getAllPushovers(
+            @RequestParam String club1){
+        return ResponseEntity.status(HttpStatus.OK).body(matchService.getAllPushovers(club1));
     }
 
     @PostMapping
